@@ -60,6 +60,8 @@ export const user = pgTable(
 		email: text('email').notNull(),
 		emailVerified: boolean('email_verified').notNull().default(false),
 		image: text('image'),
+		bio: text('bio'),
+		avatarObjectKey: text('avatar_object_key'),
 		role: text('role').notNull().default('user'),
 		banned: boolean('banned').notNull().default(false),
 		banReason: text('ban_reason'),

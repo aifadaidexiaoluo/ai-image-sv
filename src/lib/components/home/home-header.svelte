@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { ChevronDown, Gift, Menu, X } from '@lucide/svelte';
+	import { ChevronDown, Coins, Crown, Gift, Menu, X } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
+	import UserMenu from '$lib/components/account/user-menu.svelte';
+	import type { AccountSummary } from '$lib/types/account';
 	import BrandLogo from './brand-logo.svelte';
 	import { navItems } from './home-content';
 
 	let openMenu = $state<string | null>(null);
 	let mobileOpen = $state(false);
 	let navigation: HTMLElement;
+	let { account = null }: { account?: AccountSummary | null } = $props();
 
 	function handleWindowClick(event: MouseEvent) {
 		if (!navigation?.contains(event.target as Node)) openMenu = null;
@@ -70,23 +73,38 @@
 		</nav>
 
 		<div class="ml-auto hidden items-center gap-3 sm:flex">
-			<a
-				href="/app/billing"
-				class="flex items-center gap-1.5 px-2 text-sm font-medium text-[#3c455a] hover:text-primary"
-			>
-				<Gift class="size-4 text-[#ff9e37]" />
-				{m.home_points()}
-			</a>
-			<a
-				href="/login"
-				class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-[#283149] shadow-sm hover:text-primary"
-				>{m.home_login()}</a
-			>
-			<a
-				href="/app/create/product"
-				class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_9px_24px_rgba(91,61,245,0.28)] transition hover:-translate-y-0.5 hover:bg-[#4e30df]"
-				>{m.home_trial()}</a
-			>
+			{#if account}
+				<a
+					href="/app/billing"
+					class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-[#3c455a] hover:bg-primary/5 hover:text-primary"
+				>
+					<Coins class="size-4 text-[#ff9e37]" />{account.balance} 积分
+				</a>
+				<span
+					class="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+				>
+					<Crown class="size-3.5" />{account.planName}
+				</span>
+				<UserMenu user={account.user} />
+			{:else}
+				<a
+					href="/app/billing"
+					class="flex items-center gap-1.5 px-2 text-sm font-medium text-[#3c455a] hover:text-primary"
+				>
+					<Gift class="size-4 text-[#ff9e37]" />
+					{m.home_points()}
+				</a>
+				<a
+					href="/login"
+					class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-[#283149] shadow-sm hover:text-primary"
+					>{m.home_login()}</a
+				>
+				<a
+					href="/app/create/product"
+					class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_9px_24px_rgba(91,61,245,0.28)] transition hover:-translate-y-0.5 hover:bg-[#4e30df]"
+					>{m.home_trial()}</a
+				>
+			{/if}
 		</div>
 		<button
 			type="button"
@@ -105,15 +123,27 @@
 						class="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-primary/5"
 						>{item.label}</a
 					>{/each}
-				<div class="grid grid-cols-2 gap-2 pt-3">
-					<a href="/login" class="rounded-xl border px-4 py-3 text-center text-sm"
-						>{m.home_login()}</a
-					><a
-						href="/app/create/product"
-						class="rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white"
-						>{m.home_trial()}</a
-					>
-				</div>
+				{#if account}
+					<div class="mt-3 flex items-center justify-between rounded-xl bg-primary/5 p-3">
+						<div class="text-sm">
+							<p class="font-semibold text-primary">{account.balance} 积分 · {account.planName}</p>
+							<p class="mt-0.5 max-w-48 truncate text-xs text-muted-foreground">
+								{account.user.name}
+							</p>
+						</div>
+						<UserMenu user={account.user} />
+					</div>
+				{:else}
+					<div class="grid grid-cols-2 gap-2 pt-3">
+						<a href="/login" class="rounded-xl border px-4 py-3 text-center text-sm"
+							>{m.home_login()}</a
+						><a
+							href="/app/create/product"
+							class="rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white"
+							>{m.home_trial()}</a
+						>
+					</div>
+				{/if}
 			</nav>
 		</div>{/if}
 </header>

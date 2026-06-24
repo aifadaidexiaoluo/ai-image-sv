@@ -44,7 +44,8 @@ export const auth = betterAuth({
 	user: {
 		deleteUser: { enabled: true },
 		additionalFields: {
-			role: { type: 'string', required: false, defaultValue: 'user', input: false }
+			role: { type: 'string', required: false, defaultValue: 'user', input: false },
+			bio: { type: 'string', required: false, input: false }
 		}
 	},
 	rateLimit: { enabled: true, window: 60, max: 100, storage: 'database' },

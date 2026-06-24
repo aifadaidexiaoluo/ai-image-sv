@@ -10,6 +10,9 @@
 		WorkflowSteps
 	} from '$lib/components/home';
 	import * as m from '$lib/paraglide/messages';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 </script>
 
 <svelte:head>
@@ -18,7 +21,7 @@
 </svelte:head>
 
 <div class="home-page overflow-hidden">
-	<HomeHeader />
+	<HomeHeader account={data.account} />
 	<main>
 		<HeroSection />
 		<WorkflowSteps />

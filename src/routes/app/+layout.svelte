@@ -3,14 +3,15 @@
 	import {
 		Coins,
 		CreditCard,
+		Crown,
 		History,
 		Home,
 		Image,
-		LogOut,
 		Settings,
 		Sparkles,
 		WandSparkles
 	} from '@lucide/svelte';
+	import UserMenu from '$lib/components/account/user-menu.svelte';
 	import type { LayoutData } from './$types';
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 	const navigation = [
@@ -54,13 +55,22 @@
 		>
 			<a href="/" class="font-bold text-primary lg:hidden">DesignAI</a>
 			<div class="ml-auto flex items-center gap-3">
-				<span class="hidden text-sm text-muted-foreground sm:inline">{data.user.name}</span>
-				<form method="POST" action="/logout">
-					<button
-						class="grid size-9 place-items-center rounded-lg border hover:bg-muted"
-						aria-label="退出登录"><LogOut class="size-4" /></button
+				<a
+					href="/app/billing"
+					class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-primary/5 hover:text-primary"
+				>
+					<Coins class="size-4 text-amber-500" />{data.account.balance}<span
+						class="hidden sm:inline"
 					>
-				</form>
+						积分</span
+					>
+				</a>
+				<span
+					class="hidden items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary sm:flex"
+				>
+					<Crown class="size-3.5" />{data.account.planName}
+				</span>
+				<UserMenu user={data.account.user} />
 			</div>
 		</header>
 		<nav class="flex gap-1 overflow-x-auto border-b bg-white px-3 py-2 lg:hidden">

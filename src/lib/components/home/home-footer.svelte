@@ -20,7 +20,7 @@
 				<div>
 					<h3 class="text-sm font-semibold text-[#293044]">{group.title}</h3>
 					<ul class="mt-4 space-y-2.5">
-						{#each group.links as link (link.href)}<li>
+						{#each group.links as link (`${link.href}:${link.label}`)}<li>
 								<a href={link.href} class="text-xs text-[#737b8e] hover:text-primary"
 									>{link.label}</a
 								>
