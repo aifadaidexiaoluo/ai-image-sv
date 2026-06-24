@@ -9,7 +9,7 @@
 
 <footer class="border-t border-[#eeecf5] bg-white py-12">
 	<div class="home-container">
-		<div class="grid grid-cols-[1.55fr_repeat(4,1fr)_0.8fr] gap-9">
+		<div class="grid grid-cols-2 gap-9 sm:grid-cols-3 lg:grid-cols-[1.55fr_repeat(4,1fr)_0.8fr]">
 			<div>
 				<BrandLogo />
 				<p class="mt-5 max-w-[260px] text-xs leading-6 text-[#7a8295]">
@@ -20,8 +20,10 @@
 				<div>
 					<h3 class="text-sm font-semibold text-[#293044]">{group.title}</h3>
 					<ul class="mt-4 space-y-2.5">
-						{#each group.links as link (link)}<li>
-								<a href="/" class="text-xs text-[#737b8e] hover:text-primary">{link}</a>
+						{#each group.links as link (link.href)}<li>
+								<a href={link.href} class="text-xs text-[#737b8e] hover:text-primary"
+									>{link.label}</a
+								>
 							</li>{/each}
 					</ul>
 				</div>

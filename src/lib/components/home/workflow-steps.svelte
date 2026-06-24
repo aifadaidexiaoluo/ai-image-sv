@@ -17,7 +17,7 @@
 		<h2 class="text-[23px] font-bold tracking-[-0.02em] text-[#171c2b]">
 			{m.home_workflow_title()}
 		</h2>
-		<div class="mt-7 grid grid-cols-4 gap-7">
+		<div class="mt-7 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
 			{#each steps as step, index (step.title)}
 				<div class="relative flex items-center gap-4">
 					<div
@@ -34,7 +34,7 @@
 						<p class="mt-1.5 text-xs text-[#858c9d]">{step.description}</p>
 					</div>
 					{#if index < steps.length - 1}<ArrowRight
-							class="absolute -right-5 size-5 text-[#c8bfff]"
+							class={`absolute -right-5 size-5 text-[#c8bfff] ${index === 1 ? 'sm:hidden lg:block' : ''}`}
 						/>{/if}
 				</div>
 			{/each}

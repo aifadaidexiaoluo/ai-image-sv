@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { ChevronDown, Gift } from '@lucide/svelte';
+	import { ChevronDown, Gift, Menu, X } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import BrandLogo from './brand-logo.svelte';
 	import { navItems } from './home-content';
 
 	let openMenu = $state<string | null>(null);
+	let mobileOpen = $state(false);
 	let navigation: HTMLElement;
 
 	function handleWindowClick(event: MouseEvent) {
@@ -22,7 +23,11 @@
 	<div class="home-container flex h-full items-center justify-between">
 		<BrandLogo />
 
-		<nav bind:this={navigation} aria-label="主导航" class="ml-10 flex h-full items-center gap-1">
+		<nav
+			bind:this={navigation}
+			aria-label="主导航"
+			class="ml-10 hidden h-full items-center gap-1 lg:flex"
+		>
 			{#each navItems as item (item.label)}
 				<div class="relative flex h-full items-center">
 					{#if item.children}
@@ -64,24 +69,51 @@
 			{/each}
 		</nav>
 
-		<div class="ml-auto flex items-center gap-3">
+		<div class="ml-auto hidden items-center gap-3 sm:flex">
 			<a
-				href="#cases"
+				href="/app/billing"
 				class="flex items-center gap-1.5 px-2 text-sm font-medium text-[#3c455a] hover:text-primary"
 			>
 				<Gift class="size-4 text-[#ff9e37]" />
 				{m.home_points()}
 			</a>
 			<a
-				href="/demo/better-auth/login"
+				href="/login"
 				class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-[#283149] shadow-sm hover:text-primary"
 				>{m.home_login()}</a
 			>
 			<a
-				href="/ai-design"
+				href="/app/create/product"
 				class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_9px_24px_rgba(91,61,245,0.28)] transition hover:-translate-y-0.5 hover:bg-[#4e30df]"
 				>{m.home_trial()}</a
 			>
 		</div>
+		<button
+			type="button"
+			class="ml-auto grid size-10 place-items-center rounded-xl border sm:hidden"
+			onclick={() => (mobileOpen = !mobileOpen)}
+			aria-label="打开导航"
+			>{#if mobileOpen}<X class="size-5" />{:else}<Menu class="size-5" />{/if}</button
+		>
 	</div>
+	{#if mobileOpen}<div
+			class="absolute inset-x-0 top-[76px] border-b bg-white p-4 shadow-lg sm:hidden"
+		>
+			<nav class="space-y-1">
+				{#each navItems as item}<a
+						href={item.href}
+						class="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-primary/5"
+						>{item.label}</a
+					>{/each}
+				<div class="grid grid-cols-2 gap-2 pt-3">
+					<a href="/login" class="rounded-xl border px-4 py-3 text-center text-sm"
+						>{m.home_login()}</a
+					><a
+						href="/app/create/product"
+						class="rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white"
+						>{m.home_trial()}</a
+					>
+				</div>
+			</nav>
+		</div>{/if}
 </header>

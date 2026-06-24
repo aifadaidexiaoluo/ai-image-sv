@@ -32,13 +32,13 @@
 </script>
 
 <section id="capabilities" class="bg-[#f8f7ff] py-16">
-	<div class="home-container grid grid-cols-[43%_57%] items-center gap-12">
+	<div class="home-container grid items-center gap-12 lg:grid-cols-[43%_57%]">
 		<div>
 			<h2 class="text-[36px] leading-[1.2] font-extrabold tracking-[-0.04em] text-[#151a29]">
 				{m.home_capabilities_title_line1()}<br />{m.home_capabilities_title_line2()}
 			</h2>
 			<a
-				href="/ai-design"
+				href="/app/create/product"
 				class="mt-9 inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(91,61,245,.25)] transition hover:-translate-y-0.5"
 				>{m.home_start_design()} <ArrowRight class="size-4" /></a
 			>
@@ -68,7 +68,7 @@
 					>AI Studio</span
 				>
 			</div>
-			<div class="mt-5 grid grid-cols-[150px_1fr] gap-5">
+			<div class="mt-5 grid gap-5 sm:grid-cols-[150px_1fr]">
 				<div class="space-y-2">
 					{#each mockSteps as step, index (step)}
 						<div

@@ -1,0 +1,39 @@
+import type { GeneratedImage, GenerationRequest, ImageGenerationProvider } from './types';
+
+export class TongyiImageProvider implements ImageGenerationProvider {
+	id = 'tongyi' as const;
+
+	async generate(request: GenerationRequest): Promise<GeneratedImage[]> {
+		if (!process.env.DASHSCOPE_API_KEY) throw new Error('TONGYI_NOT_CONFIGURED');
+		const response = await fetch(
+			process.env.DASHSCOPE_IMAGE_ENDPOINT ??
+				'https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis',
+			{
+				method: 'POST',
+				headers: {
+					authorization: `Bearer ${process.env.DASHSCOPE_API_KEY}`,
+					'content-type': 'application/json',
+					'X-DashScope-Async': 'disable'
+				},
+				body: JSON.stringify({
+					model: process.env.DASHSCOPE_IMAGE_MODEL ?? 'wanx-v1',
+					input: { prompt: request.prompt },
+					parameters: { n: request.count, size: '1024*1024' }
+				})
+			}
+		);
+		if (!response.ok) throw new Error(`TONGYI_${response.status}`);
+		const payload = (await response.json()) as {
+			output?: { results?: Array<{ url: string }> };
+		};
+		return Promise.all(
+			(payload.output?.results ?? []).map(async ({ url }) => {
+				const image = await fetch(url);
+				return {
+					bytes: new Uint8Array(await image.arrayBuffer()),
+					mimeType: image.headers.get('content-type') ?? 'image/png'
+				} satisfies GeneratedImage;
+			})
+		);
+	}
+}

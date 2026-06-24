@@ -17,7 +17,7 @@
 	<meta name="description" content={m.home_meta_description()} />
 </svelte:head>
 
-<div class="home-page min-w-[1180px] overflow-hidden">
+<div class="home-page overflow-hidden">
 	<HomeHeader />
 	<main>
 		<HeroSection />

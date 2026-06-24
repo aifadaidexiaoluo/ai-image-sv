@@ -41,7 +41,7 @@
 				>{m.home_view_all()} <ArrowRight class="size-4" /></a
 			>
 		</div>
-		<div class="mt-4 flex items-center gap-3">
+		<div class="mt-4 flex items-center gap-3 overflow-x-auto pb-2">
 			{#each categories as category (category.id)}
 				<button
 					type="button"
@@ -57,7 +57,7 @@
 		</div>
 
 		<div class="relative mt-5">
-			<div class="grid min-h-[320px] grid-cols-5 gap-4">
+			<div class="grid min-h-[320px] grid-cols-2 gap-4 lg:grid-cols-5">
 				{#each visibleItems as item (item.id)}
 					<article
 						class="group overflow-hidden rounded-2xl border border-[#ebe9f4] bg-white shadow-[0_10px_35px_rgba(69,53,140,.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(69,53,140,.12)]"

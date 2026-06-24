@@ -28,12 +28,12 @@
 </script>
 
 <section
-	class="relative overflow-hidden bg-[radial-gradient(circle_at_68%_30%,#e8e3ff_0,transparent_34%),linear-gradient(135deg,#fff_8%,#f8f7ff_56%,#f0edff_100%)] pt-12 pb-8"
+	class="relative overflow-hidden bg-[radial-gradient(circle_at_68%_30%,#e8e3ff_0,transparent_34%),linear-gradient(135deg,#fff_8%,#f8f7ff_56%,#f0edff_100%)] pt-8 pb-8 sm:pt-12"
 >
 	<div
 		class="pointer-events-none absolute top-14 left-[58%] size-[430px] rounded-full border border-white/90 bg-white/20 shadow-[0_0_100px_rgba(111,82,255,.16)]"
 	></div>
-	<div class="home-container relative grid min-h-[520px] grid-cols-[46%_54%] items-center">
+	<div class="home-container relative grid min-h-[520px] items-center lg:grid-cols-[46%_54%]">
 		<div class="relative z-10 pr-8">
 			<div
 				class="mb-6 inline-flex items-center gap-2 rounded-full bg-[#f0edff] px-4 py-2 text-xs font-semibold text-primary"
@@ -41,7 +41,9 @@
 				<Sparkles class="size-3.5" />
 				{m.home_eyebrow()}
 			</div>
-			<h1 class="text-[48px] leading-[1.14] font-extrabold tracking-[-0.045em] text-[#101522]">
+			<h1
+				class="text-[38px] leading-[1.14] font-extrabold tracking-[-0.045em] text-[#101522] sm:text-[48px]"
+			>
 				{m.home_hero_title_line1()}<br />{m.home_hero_title_line2()}<span
 					class="bg-gradient-to-r from-[#6e4fff] to-[#4d2ce2] bg-clip-text text-transparent"
 					>{m.home_hero_title_accent()}</span
@@ -52,7 +54,7 @@
 			</p>
 			<div class="mt-8 flex items-center gap-4">
 				<a
-					href="/ai-design"
+					href="/app/create/product"
 					class="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(91,61,245,.27)] transition hover:-translate-y-0.5 hover:bg-[#4f31dc]"
 				>
 					{m.home_start_design()}
@@ -69,7 +71,7 @@
 			</div>
 		</div>
 
-		<div class="relative h-[490px]">
+		<div class="relative mt-6 h-[400px] sm:h-[490px] lg:mt-0">
 			<div
 				class="absolute inset-6 overflow-hidden rounded-[44px] bg-white/40 shadow-[0_34px_90px_rgba(75,55,170,.16)] ring-1 ring-white/80"
 			>
@@ -138,7 +140,9 @@
 		</div>
 	</div>
 
-	<div class="home-container relative mt-2 grid grid-cols-4 border-t border-white/80 pt-7">
+	<div
+		class="home-container relative mt-2 grid grid-cols-2 gap-y-5 border-t border-white/80 pt-7 lg:grid-cols-4"
+	>
 		{#each features as feature (feature.title)}
 			<div class="flex items-center gap-3 border-r border-[#ebe9f5] px-5 last:border-0 first:pl-0">
 				<div class="grid size-10 place-items-center rounded-xl bg-[#f0edff] text-primary">

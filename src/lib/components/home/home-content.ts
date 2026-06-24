@@ -49,14 +49,14 @@ export const navItems: NavItem[] = [
 	{ label: m.home_nav_home(), href: '/' },
 	{
 		label: m.home_nav_ai(),
-		href: '/ai-design',
+		href: '/app/create/product',
 		children: [
-			{ label: m.home_dropdown_product(), href: '/ai-design' },
-			{ label: m.home_dropdown_scene(), href: '/ai-design/scene' },
-			{ label: m.home_dropdown_remove(), href: '/ai-design/remove-background' }
+			{ label: m.home_dropdown_product(), href: '/app/create/product' },
+			{ label: m.home_dropdown_scene(), href: '/app/create/scene' },
+			{ label: m.home_dropdown_remove(), href: '/app/create/remove-background' }
 		]
 	},
-	{ label: m.home_nav_templates(), href: '#templates' },
+	{ label: m.home_nav_templates(), href: '/templates' },
 	{
 		label: m.home_nav_solutions(),
 		href: '#capabilities',
@@ -68,10 +68,10 @@ export const navItems: NavItem[] = [
 	{ label: m.home_nav_pricing(), href: '/pricing' },
 	{
 		label: m.home_nav_resources(),
-		href: '#cases',
+		href: '/guide',
 		children: [
-			{ label: m.home_dropdown_guide(), href: '#workflow' },
-			{ label: m.home_dropdown_cases(), href: '#cases' }
+			{ label: m.home_dropdown_guide(), href: '/guide' },
+			{ label: m.home_dropdown_cases(), href: '/cases' }
 		]
 	}
 ];
@@ -172,12 +172,35 @@ export const metrics: MetricItem[] = [
 export const footerGroups = [
 	{
 		title: m.home_footer_product(),
-		links: [m.home_nav_ai(), m.home_nav_templates(), m.home_nav_pricing()]
+		links: [
+			{ label: m.home_nav_ai(), href: '/app/create/product' },
+			{ label: m.home_nav_templates(), href: '/templates' },
+			{ label: m.home_nav_pricing(), href: '/pricing' }
+		]
 	},
 	{
 		title: m.home_footer_help(),
-		links: [m.home_dropdown_guide(), '设计教程', '常见问题', '联系客服']
+		links: [
+			{ label: m.home_dropdown_guide(), href: '/guide' },
+			{ label: '设计教程', href: '/guide' },
+			{ label: '常见问题', href: '/faq' },
+			{ label: '联系客服', href: 'mailto:support@designai.local' }
+		]
 	},
-	{ title: m.home_footer_about(), links: ['公司介绍', '加入我们', '媒体报道', '合作伙伴'] },
-	{ title: m.home_footer_terms(), links: ['用户协议', '隐私政策', '版权声明', '商用授权'] }
+	{
+		title: m.home_footer_about(),
+		links: [
+			{ label: '客户案例', href: '/cases' },
+			{ label: '产品能力', href: '/#capabilities' },
+			{ label: '模板中心', href: '/templates' }
+		]
+	},
+	{
+		title: m.home_footer_terms(),
+		links: [
+			{ label: '用户协议', href: '/terms' },
+			{ label: '隐私政策', href: '/privacy' },
+			{ label: '常见问题', href: '/faq' }
+		]
+	}
 ];

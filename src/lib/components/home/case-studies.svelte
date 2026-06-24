@@ -8,7 +8,7 @@
 	<div class="home-container">
 		<h2 class="text-[24px] font-bold tracking-[-0.025em] text-[#171c2b]">{m.home_cases_title()}</h2>
 		<p class="mt-2 text-sm text-[#858c9d]">{m.home_cases_subtitle()}</p>
-		<div class="mt-6 grid grid-cols-4 gap-5">
+		<div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
 			{#each caseStudies as item (item.id)}
 				<article
 					class="group overflow-hidden rounded-2xl border border-[#eae8f3] bg-white shadow-[0_12px_36px_rgba(69,53,140,.07)] transition hover:-translate-y-1"

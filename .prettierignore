@@ -8,3 +8,10 @@ bun.lockb
 # Miscellaneous
 /static/
 /drizzle/
+/.agents/
+/.codex/
+/.svelte-kit/
+/project.inlang/.meta.json
+/skills-lock.json
+/src/lib/components/ui/
+/src/lib/paraglide/

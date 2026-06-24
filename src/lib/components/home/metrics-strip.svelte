@@ -9,7 +9,7 @@
 	<div
 		class="home-container overflow-hidden rounded-2xl bg-gradient-to-r from-[#6544f4] via-[#876df8] to-[#c5b7fb] px-8 py-6 text-white shadow-[0_18px_45px_rgba(99,68,244,.2)]"
 	>
-		<div class="grid grid-cols-4">
+		<div class="grid grid-cols-2 gap-y-5 lg:grid-cols-4">
 			{#each metrics as metric, index (metric.label)}
 				{@const Icon = icons[index]}
 				<div class="flex items-center justify-center gap-4 border-r border-white/20 last:border-0">
