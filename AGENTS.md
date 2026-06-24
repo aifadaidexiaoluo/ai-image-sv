@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository is a SvelteKit 2 application using Svelte 5, TypeScript, Tailwind CSS, and the Node adapter. Route components and server actions live in `src/routes`; follow SvelteKit conventions such as `+page.svelte`, `+page.server.ts`, and `+layout.svelte`. Shared code belongs in `src/lib`, reusable UI components in `src/lib/components/ui`, and server-only authentication and Drizzle database code in `src/lib/server`. Static files go in `static`; imported assets go in `src/lib/assets`. Translation sources are in `messages`, while `src/lib/paraglide` is generated from `project.inlang` and should not be edited manually.
+This is a SvelteKit 2 application using Svelte 5 runes, TypeScript, Tailwind CSS, and the Node adapter. Routes and server actions live in `src/routes`; follow conventions such as `+page.svelte`, `+page.server.ts`, and `+layout.svelte`. Shared code belongs in `src/lib`, hooks in `src/lib/hooks`, and shadcn-svelte primitives in `src/lib/components/ui/<component>`. Keep Better Auth and Drizzle code under `src/lib/server`. Static files go in `static`, imported assets in `src/lib/assets`, and translation sources in `messages`. `src/lib/paraglide` is generated from `project.inlang`; do not edit it manually.
 
 ## Build, Test, and Development Commands
 
@@ -15,12 +15,13 @@ Use Bun, matching the committed `bun.lock`:
 - `bun run check` performs Svelte and TypeScript diagnostics.
 - `bun run lint` runs Prettier checks and ESLint; `bun run format` applies formatting.
 - `bun run db:generate`, `db:migrate`, or `db:push` manage Drizzle schema changes.
+- `bun run db:studio` opens Drizzle Studio; `bun run auth:schema` regenerates the auth schema.
 
-Database commands require `DATABASE_URL` in the environment. Never commit credentials or local environment files.
+Copy `.env.example` to a local environment file and set `DATABASE_URL`, `ORIGIN`, and a high-entropy `BETTER_AUTH_SECRET`. Never commit credentials.
 
 ## Coding Style & Naming Conventions
 
-TypeScript strict mode is enabled. Let Prettier define whitespace (the existing code uses tabs), and run formatting rather than aligning code manually. Use PascalCase for reusable Svelte component filenames, camelCase for variables and functions, and descriptive lowercase route directories. Keep browser-safe utilities in `src/lib`; keep secrets and database access under `src/lib/server`. Svelte runes mode is enabled throughout application code.
+TypeScript strict mode is enabled. Let Prettier define whitespace (existing code uses tabs) and Tailwind class ordering. Use camelCase for variables/functions and kebab-case for UI component files, matching `button/button.svelte` and `alert-dialog/alert-dialog-content.svelte`. Re-export each primitive through its folder's `index.ts`; use `$lib` aliases instead of long relative imports. Keep browser-safe utilities in `src/lib` and secrets or database access in `src/lib/server`.
 
 ## Testing Guidelines
 
@@ -28,4 +29,4 @@ No automated test runner or coverage threshold is currently configured. Treat `b
 
 ## Commit & Pull Request Guidelines
 
-Write concise, imperative commits with an optional Conventional Commit prefix, for example `feat: add image history` or `fix: validate login redirect`. Keep each commit focused. Pull requests should explain the user-visible outcome, note database or configuration changes, list verification commands, link related issues, and include screenshots for UI changes.
+History follows Conventional Commits: `feat:`, `fix:`, `style:`, and `chore:`. Write concise, imperative subjects such as `feat: add image history`, and keep commits focused. Pull requests should explain the user-visible outcome, note database or environment changes, list verification commands, link related issues, and include before/after screenshots for UI changes.
