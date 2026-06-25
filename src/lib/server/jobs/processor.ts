@@ -6,6 +6,7 @@ import { backgroundRemovalProvider, getImageProvider } from '$lib/server/provide
 import { storageProvider } from '$lib/server/storage';
 import { creditsPerOutput } from './service';
 import { publishJobEvent, updateJobProgress } from './events';
+import { buildGenerationPrompt } from './prompt';
 
 type Job = typeof generationJobs.$inferSelect;
 
@@ -126,7 +127,11 @@ export async function processJob(job: Job) {
 				? [await backgroundRemovalProvider.removeBackground(source!)]
 				: await getImageProvider(job.provider as 'auto' | 'openai' | 'tongyi').generate({
 						tool: job.tool,
-						prompt: job.prompt ?? '高品质电商商品视觉，专业棚拍光线',
+						prompt: buildGenerationPrompt({
+							tool: job.tool,
+							prompt: job.prompt,
+							parameters: job.parameters
+						}),
 						count: job.totalCount,
 						aspectRatio: String(job.parameters.aspectRatio ?? '1:1'),
 						source

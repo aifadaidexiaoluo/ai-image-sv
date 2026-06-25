@@ -3,8 +3,10 @@ import type { PageServerLoad } from './$types';
 import { getCatalog } from '$lib/server/billing/catalog';
 import { db } from '$lib/server/db';
 import { creditTransactions, orders, subscriptions } from '$lib/server/db/schema';
+import { ensureWallet } from '$lib/server/credits';
 
 export const load: PageServerLoad = async ({ locals }) => ({
+	wallet: await ensureWallet(locals.user!.id),
 	catalog: await getCatalog(),
 	transactions: await db
 		.select()

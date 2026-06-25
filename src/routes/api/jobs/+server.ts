@@ -22,6 +22,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		aspectRatio?: string;
 		sourceAssetId?: string;
 		templateId?: string;
+		parameters?: Record<string, unknown>;
 	};
 	if (!input.tool || !tools.has(input.tool))
 		return json({ message: '无效的处理工具' }, { status: 400 });
@@ -37,7 +38,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			count: input.count ?? 1,
 			aspectRatio: input.aspectRatio ?? '1:1',
 			sourceAssetId: input.sourceAssetId,
-			templateId: input.templateId
+			templateId: input.templateId,
+			parameters: input.parameters
 		});
 		return json({ job }, { status: 201 });
 	} catch (error) {

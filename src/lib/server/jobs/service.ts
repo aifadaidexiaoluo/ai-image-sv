@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { assets, generationJobs, generationOutputs, jobEvents } from '$lib/server/db/schema';
 import { ensureWallet, reserveCredits } from '$lib/server/credits';
@@ -15,6 +15,15 @@ export interface CreateJobInput {
 	aspectRatio: string;
 	sourceAssetId?: string;
 	templateId?: string;
+	parameters?: Record<string, unknown>;
+}
+
+export interface ListJobsForUserInput {
+	tool?: GenerationTool;
+	keyword?: string;
+	page?: number;
+	pageSize?: number;
+	sort?: 'latest' | 'oldest';
 }
 
 export async function createJob(userId: string, input: CreateJobInput) {
@@ -43,7 +52,11 @@ export async function createJob(userId: string, input: CreateJobInput) {
 			totalCount,
 			sourceAssetId: input.sourceAssetId,
 			reservedCredits,
-			parameters: { aspectRatio: input.aspectRatio, templateId: input.templateId }
+			parameters: {
+				aspectRatio: input.aspectRatio,
+				templateId: input.templateId,
+				...input.parameters
+			}
 		})
 		.returning();
 
@@ -91,14 +104,28 @@ export async function getJobForUser(jobId: string, userId: string, isAdmin = fal
 	return { ...job, outputs };
 }
 
-export async function listJobsForUser(userId: string, limit = 30) {
+export async function listJobsForUser(userId: string, input: number | ListJobsForUserInput = 30) {
+	const options = typeof input === 'number' ? { pageSize: input } : input;
+	const page = Math.max(1, options.page ?? 1);
+	const pageSize = Math.max(1, Math.min(options.pageSize ?? 30, 100));
+	const filters = [
+		eq(generationJobs.userId, userId),
+		options.tool ? eq(generationJobs.tool, options.tool) : undefined,
+		options.keyword ? ilike(generationJobs.prompt, `%${options.keyword}%`) : undefined
+	].filter(Boolean);
+	const where = and(...filters);
+	const [{ total }] = await db.select({ total: count() }).from(generationJobs).where(where);
 	const jobs = await db
 		.select()
 		.from(generationJobs)
-		.where(eq(generationJobs.userId, userId))
-		.orderBy(desc(generationJobs.createdAt))
-		.limit(limit);
-	return Promise.all(jobs.map((job) => getJobForUser(job.id, userId)));
+		.where(where)
+		.orderBy(
+			options.sort === 'oldest' ? asc(generationJobs.createdAt) : desc(generationJobs.createdAt)
+		)
+		.limit(pageSize)
+		.offset((page - 1) * pageSize);
+	const items = await Promise.all(jobs.map((job) => getJobForUser(job.id, userId)));
+	return Object.assign(items, { total, page, pageSize });
 }
 
 export async function retryJob(jobId: string, userId: string, isAdmin = false) {

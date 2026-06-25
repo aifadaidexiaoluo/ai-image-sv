@@ -1,5 +1,6 @@
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import type { PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { assets } from '$lib/server/db/schema';
 import { storageProvider } from '$lib/server/storage';
@@ -19,4 +20,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 			}))
 		)
 	};
+};
+
+export const actions: Actions = {
+	toggleFavorite: async ({ locals, request }) => {
+		const form = await request.formData();
+		const id = String(form.get('id') ?? '');
+		const asset = await db.query.assets.findFirst({
+			where: and(eq(assets.id, id), eq(assets.userId, locals.user!.id), isNull(assets.deletedAt))
+		});
+		if (!asset) return fail(404, { message: '素材不存在' });
+		await db.update(assets).set({ favorite: !asset.favorite }).where(eq(assets.id, asset.id));
+		return { success: true };
+	}
 };
