@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import {
 		Bell,
@@ -32,76 +33,60 @@
 </script>
 
 <div
-	class="min-h-screen bg-[radial-gradient(circle_at_top_right,#f2edff_0,#f8fbff_30%,#ffffff_72%)] text-[#172033] lg:grid lg:grid-cols-[240px_1fr]"
+	class="grid min-h-screen grid-cols-[256px_1fr] bg-[radial-gradient(circle_at_top_right,#f3efff_0,#f8fbff_34%,#ffffff_76%)] text-[#172033]"
 >
 	<aside
-		class="hidden border-r border-[#e8eaf6] bg-white/88 shadow-[12px_0_34px_rgba(90,76,180,0.05)] backdrop-blur lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:p-5"
+		class="sticky top-0 flex h-screen flex-col border-r border-[#e8eaf6] bg-white/90 px-8 py-9 shadow-[14px_0_40px_rgba(91,61,245,0.045)] backdrop-blur"
 	>
-		<a href="/" class="flex items-center gap-3 px-2 py-2 text-xl font-bold text-primary"
+		<a href={resolve('/')} class="flex items-center gap-3 text-[21px] font-black text-primary"
 			><span
 				class="grid size-10 place-items-center rounded-xl bg-primary text-white shadow-lg shadow-primary/25"
 				><Sparkles class="size-5" /></span
 			>DesignAI</a
 		>
-		<nav class="mt-8 space-y-2">
-			{#each navigation as item}<a
-					href={item.href}
-					class={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition ${isActive(item.href) ? 'bg-primary/10 text-primary shadow-sm shadow-primary/10' : 'text-[#65708a] hover:bg-[#f5f2ff] hover:text-primary'}`}
-					><item.icon class="size-4" />{item.label}</a
+		<nav class="mt-8 space-y-3">
+			{#each navigation as item (item.href)}<a
+					href={resolve(item.href)}
+					class={`flex h-12 items-center gap-4 rounded-xl px-4 text-[15px] font-bold transition ${isActive(item.href) ? 'bg-primary/10 text-primary shadow-[0_10px_24px_rgba(91,61,245,0.1)]' : 'text-[#68738d] hover:bg-[#f5f2ff] hover:text-primary'}`}
+					><item.icon class="size-5 stroke-[1.9]" />{item.label}</a
 				>{/each}
 		</nav>
-		<div class="mt-auto rounded-2xl bg-gradient-to-br from-primary/10 to-violet-50 p-4">
-			<div class="flex items-center gap-2 text-sm font-semibold text-primary">
+		<div
+			class="mt-auto rounded-2xl bg-gradient-to-br from-primary/10 to-violet-50 p-4 shadow-[0_16px_36px_rgba(91,61,245,0.08)]"
+		>
+			<div class="flex items-center gap-2 text-sm font-bold text-primary">
 				<Coins class="size-4" />{data.wallet.balance} 可用积分
 			</div>
 			<p class="mt-2 text-xs leading-5 text-[#69738c]">升级套餐享更多积分和高清导出权益</p>
 			<a
-				href="/app/billing"
-				class="mt-3 flex h-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white shadow-lg shadow-primary/20"
+				href={resolve('/app/billing')}
+				class="mt-3 flex h-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white shadow-lg shadow-primary/20"
 				>升级套餐</a
 			>
 		</div>
 	</aside>
 	<div class="min-w-0">
 		<header
-			class="sticky top-0 z-40 flex h-18 items-center justify-between border-b border-[#e8eaf6] bg-white/76 px-4 backdrop-blur-xl sm:px-6 lg:px-8"
+			class="sticky top-0 z-40 flex h-[78px] items-center justify-end bg-white/45 px-10 backdrop-blur-xl"
 		>
-			<a href="/" class="font-bold text-primary lg:hidden">DesignAI</a>
-			<div class="ml-auto flex items-center gap-3">
+			<div class="ml-auto flex items-center gap-4">
 				<a
-					href="/app/billing"
-					class="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-bold text-[#172033] shadow-sm ring-1 ring-[#eceefa]"
+					href={resolve('/app/billing')}
+					class="flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-bold text-[#25304a] shadow-sm ring-1 ring-[#eceefa]"
 				>
-					<Coins class="size-4 text-amber-500" />{data.account.balance}<span
-						class="hidden sm:inline"
-					>
-						积分</span
-					>
+					<Coins class="size-4 text-amber-500" />{data.account.balance} 积分
 				</a>
 				<span
-					class="hidden items-center gap-1 rounded-full bg-primary/10 px-3 py-2 text-xs font-bold text-primary sm:flex"
+					class="flex h-9 items-center gap-1.5 rounded-full bg-primary/10 px-4 text-sm font-bold text-primary"
 				>
-					<Crown class="size-3.5" />{data.account.planName}
+					<Crown class="size-4" />{data.account.planName}
 				</span>
-				<button
-					class="grid size-10 place-items-center rounded-full bg-white text-[#172033] shadow-sm ring-1 ring-[#eceefa]"
-					aria-label="通知"
-				>
+				<button class="grid size-10 place-items-center text-[#121826]" aria-label="通知">
 					<Bell class="size-5" />
 				</button>
 				<UserMenu user={data.account.user} />
 			</div>
 		</header>
-		<nav
-			class="flex gap-1 overflow-x-auto border-b border-[#e8eaf6] bg-white/80 px-3 py-2 lg:hidden"
-		>
-			{#each navigation.slice(0, 6) as item}<a
-					href={item.href}
-					class="shrink-0 rounded-lg px-3 py-2 text-xs font-medium"
-					class:bg-primary={isActive(item.href)}
-					class:text-white={isActive(item.href)}>{item.label}</a
-				>{/each}
-		</nav>
-		<main class="p-4 sm:p-6 lg:p-8">{@render children()}</main>
+		<main class="px-10 pb-6">{@render children()}</main>
 	</div>
 </div>

@@ -167,12 +167,28 @@ export const inspirationTemplates = [
 	{
 		name: '夏日美妆',
 		description: '清新护肤系列',
-		image: '/images/app/products/skincare-cream.png'
+		image: '/images/app/dashboard/template-beauty.png'
 	},
-	{ name: '家居生活', description: '舒适简约空间', image: '/images/app/products/amber-care.png' },
-	{ name: '3C 数码', description: '科技改变生活', image: '/images/app/products/earbuds-white.png' },
-	{ name: '食品饮料', description: '美味时刻分享', image: '/images/home/pink-beauty.png' },
-	{ name: '服饰配件', description: '时尚潮流穿搭', image: '/images/app/products/perfume-main.png' }
+	{
+		name: '家居生活',
+		description: '舒适简约空间',
+		image: '/images/app/dashboard/template-home.png'
+	},
+	{
+		name: '3C 数码',
+		description: '科技改变生活',
+		image: '/images/app/dashboard/template-digital.png'
+	},
+	{
+		name: '食品饮料',
+		description: '美味时刻分享',
+		image: '/images/app/dashboard/template-food.png'
+	},
+	{
+		name: '服饰配件',
+		description: '时尚潮流穿搭',
+		image: '/images/app/dashboard/template-fashion.png'
+	}
 ] as const;
 
 export const dashboardTools = [
@@ -182,8 +198,8 @@ export const dashboardTools = [
 		description: '从描述或参考图生成电商视觉',
 		badge: '推荐',
 		icon: Sparkles,
-		image: '/images/app/products/perfume-main.png',
-		tone: 'from-violet-50 via-white to-violet-100'
+		image: '/images/app/dashboard/product-perfume.png',
+		tone: 'from-[#fbf8ff] via-[#fbf9ff] to-[#efe6ff]'
 	},
 	{
 		href: '/app/create/scene',
@@ -191,8 +207,8 @@ export const dashboardTools = [
 		description: '把商品自然融入营销场景',
 		icon: WandSparkles,
 		badge: undefined,
-		image: '/images/app/products/amber-care.png',
-		tone: 'from-blue-50 via-white to-sky-100'
+		image: '/images/app/dashboard/scene-chair.png',
+		tone: 'from-[#f8fbff] via-[#f7fbff] to-[#eaf4ff]'
 	},
 	{
 		href: '/app/create/remove-background',
@@ -200,10 +216,16 @@ export const dashboardTools = [
 		description: '生成干净透明背景 PNG',
 		icon: Image,
 		badge: undefined,
-		image: '/images/app/products/skincare-cream.png',
-		tone: 'from-emerald-50 via-white to-teal-100'
+		image: '/images/app/dashboard/remove-bg-plant.png',
+		tone: 'from-[#f4fff9] via-[#f7fffb] to-[#e9fbf1]'
 	}
 ] as const;
+
+export const dashboardFallbackImages: Record<string, string> = {
+	product: '/images/app/dashboard/product-perfume.png',
+	scene: '/images/app/dashboard/scene-chair.png',
+	'remove-background': '/images/app/dashboard/remove-bg-plant.png'
+};
 
 export const assetShowcase = [
 	{
