@@ -1,15 +1,19 @@
 import type { PageServerLoad } from './$types';
-import { listJobsForUser } from '$lib/server/jobs/service';
+import { fail } from '@sveltejs/kit';
+import { deleteJobOutputAssetForUser, listJobsForUser } from '$lib/server/jobs/service';
 import type { GenerationTool } from '$lib/server/providers';
+import type { Actions } from './$types';
 
 const tools = new Set<GenerationTool>(['product', 'scene', 'remove-background']);
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const tool = url.searchParams.get('tool');
+	const normalizedTool =
+		tool && tools.has(tool as GenerationTool) ? (tool as GenerationTool) : undefined;
 	const page = Number(url.searchParams.get('page') ?? 1);
 	const pageSize = Number(url.searchParams.get('pageSize') ?? 10);
 	const jobs = await listJobsForUser(locals.user!.id, {
-		tool: tool && tools.has(tool as GenerationTool) ? (tool as GenerationTool) : undefined,
+		tool: normalizedTool,
 		keyword: url.searchParams.get('keyword') ?? undefined,
 		page,
 		pageSize,
@@ -20,10 +24,28 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		total: jobs.total,
 		page: jobs.page,
 		pageSize: jobs.pageSize,
+		totalPages: jobs.totalPages,
+		hasPreviousPage: jobs.hasPreviousPage,
+		hasNextPage: jobs.hasNextPage,
 		filters: {
-			tool: tool ?? 'all',
+			tool: normalizedTool ?? 'all',
 			keyword: url.searchParams.get('keyword') ?? '',
 			sort: url.searchParams.get('sort') ?? 'latest'
 		}
 	};
+};
+
+export const actions: Actions = {
+	deleteOutput: async ({ locals, request }) => {
+		const form = await request.formData();
+		const jobId = String(form.get('jobId') ?? '');
+		const assetId = String(form.get('assetId') ?? '');
+
+		if (!jobId || !assetId) return fail(400, { message: '缺少输出素材信息' });
+
+		const deleted = await deleteJobOutputAssetForUser(jobId, assetId, locals.user!.id);
+		if (!deleted) return fail(404, { message: '输出素材不存在' });
+
+		return { success: true };
+	}
 };

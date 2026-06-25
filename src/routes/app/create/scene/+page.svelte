@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { sceneTemplates } from '$lib/app-catalog';
+	import { page } from '$app/state';
+	import { sceneCategories, sceneTemplates } from '$lib/app-catalog';
 	import ResultEmpty from '$lib/components/app/create-product/result-empty.svelte';
 	import type { ProductPosition } from '$lib/components/app/create-scene/position-grid.svelte';
 	import SceneSidePanel from '$lib/components/app/create-scene/scene-side-panel.svelte';
@@ -15,7 +16,7 @@
 	import type { GenerationJob } from '$lib/types/jobs';
 	import { CircleAlert, Coins, WandSparkles } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import type { PageData } from './$types';
 
 	type SceneFormValues = {
@@ -61,10 +62,27 @@
 	let error = $state('');
 	let activeJob = $state<GenerationJob>();
 	let uploadedSceneTemplates = $state<UserSceneTemplate[]>([]);
+	let prefillNotice = $state('');
 	const userSceneTemplates = $derived([...uploadedSceneTemplates, ...data.userSceneTemplates]);
+	const productPositions = new Set<ProductPosition>([
+		'top-left',
+		'top',
+		'top-right',
+		'left',
+		'center',
+		'right',
+		'bottom-left',
+		'bottom',
+		'bottom-right'
+	]);
+	const sceneCategoryIds = new Set<SceneCategoryId>(sceneCategories.map((item) => item.id));
 
 	onDestroy(() => {
 		revokePreview();
+	});
+
+	onMount(() => {
+		void prefillFromHistory();
 	});
 
 	function revokePreview() {
@@ -166,6 +184,42 @@
 
 	function setToggle(key: 'lightingMatch' | 'colorBlend' | 'detailEnhance', checked: boolean) {
 		form.setFieldValue(key, checked);
+	}
+
+	function isSceneCategoryId(value: unknown): value is SceneCategoryId {
+		return typeof value === 'string' && sceneCategoryIds.has(value as SceneCategoryId);
+	}
+
+	async function prefillFromHistory() {
+		const jobId = page.url.searchParams.get('fromJob');
+		if (!jobId) return;
+
+		const response = await fetch(`/api/jobs/${jobId}`);
+		if (!response.ok) return;
+		const payload = (await response.json()) as { job?: GenerationJob };
+		const job = payload.job;
+		if (!job || job.tool !== 'scene') return;
+
+		const parameters = job.parameters ?? {};
+		if (isSceneCategoryId(parameters.sceneCategory)) {
+			category = parameters.sceneCategory;
+		}
+		if (typeof parameters.sceneId === 'string') {
+			form.setFieldValue('selectedSceneId', parameters.sceneId);
+		}
+		if (
+			typeof parameters.productPosition === 'string' &&
+			productPositions.has(parameters.productPosition as ProductPosition)
+		) {
+			form.setFieldValue('productPosition', parameters.productPosition as ProductPosition);
+		}
+		if (typeof parameters.productScale === 'number') {
+			form.setFieldValue('productScale', Math.max(30, Math.min(100, parameters.productScale)));
+		}
+		for (const key of ['lightingMatch', 'colorBlend', 'detailEnhance'] as const) {
+			if (typeof parameters[key] === 'boolean') form.setFieldValue(key, parameters[key]);
+		}
+		prefillNotice = '已加载历史任务参数；生成场景图前请重新上传商品图。';
 	}
 
 	function validateSubmission() {
@@ -305,6 +359,12 @@
 						<Alert variant="destructive" class="mb-5">
 							<CircleAlert class="size-4" />
 							<AlertDescription>{error}</AlertDescription>
+						</Alert>
+					{/if}
+
+					{#if prefillNotice}
+						<Alert class="mb-5 border-primary/20 bg-primary/5 text-[#4f3de0]">
+							<AlertDescription>{prefillNotice}</AlertDescription>
 						</Alert>
 					{/if}
 

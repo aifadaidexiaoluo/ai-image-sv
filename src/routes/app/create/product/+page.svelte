@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { page } from '$app/state';
+	import { onDestroy, onMount } from 'svelte';
 	import { productStyles, promptSuggestions } from '$lib/app-catalog';
 	import ModeSelector, {
 		type GenerationMode
@@ -122,6 +123,7 @@
 	let advancedOpen = $state(false);
 	let suggestionBatchIndex = $state(0);
 	let exampleBatchIndex = $state(0);
+	let prefillNotice = $state('');
 
 	const visibleSuggestions = $derived(
 		suggestionBatches[suggestionBatchIndex] ?? suggestionBatches[0]
@@ -131,6 +133,10 @@
 
 	onDestroy(() => {
 		revokePreview();
+	});
+
+	onMount(() => {
+		void prefillFromHistory();
 	});
 
 	function revokePreview() {
@@ -205,6 +211,42 @@
 		const allSelected = allStyleIds.every((id) => styleIds.includes(id));
 		form.setFieldValue('styleIds', allSelected ? [defaultStyleId] : [...allStyleIds]);
 		error = '';
+	}
+
+	async function prefillFromHistory() {
+		const jobId = page.url.searchParams.get('fromJob');
+		if (!jobId) return;
+
+		const response = await fetch(`/api/jobs/${jobId}`);
+		if (!response.ok) return;
+		const payload = (await response.json()) as { job?: GenerationJob };
+		const job = payload.job;
+		if (!job || job.tool !== 'product') return;
+
+		const parameters = job.parameters ?? {};
+		const generationMode =
+			parameters.generationMode === 'reference' || parameters.generationMode === 'prompt'
+				? parameters.generationMode
+				: 'prompt';
+		const styleIds = Array.isArray(parameters.styleIds)
+			? parameters.styleIds.filter((id): id is ProductStyleId =>
+					allStyleIds.includes(id as ProductStyleId)
+				)
+			: [];
+
+		form.setFieldValue('generationMode', generationMode);
+		form.setFieldValue('prompt', job.prompt ?? '');
+		form.setFieldValue('count', [1, 2, 4].includes(job.totalCount) ? job.totalCount : 4);
+		if (typeof parameters.aspectRatio === 'string') {
+			form.setFieldValue('aspectRatio', parameters.aspectRatio);
+		}
+		if (typeof parameters.size === 'string') {
+			form.setFieldValue('size', parameters.size);
+		}
+		if (styleIds.length) {
+			form.setFieldValue('styleIds', styleIds);
+		}
+		prefillNotice = '已加载历史任务参数；如需使用参考图生成，请重新上传源图片。';
 	}
 
 	function validateSubmission(value: ProductFormValues) {
@@ -434,6 +476,12 @@
 							<Alert variant="destructive" class="mt-5">
 								<CircleAlert class="size-4" />
 								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						{/if}
+
+						{#if prefillNotice}
+							<Alert class="mt-5 border-primary/20 bg-primary/5 text-[#4f3de0]">
+								<AlertDescription>{prefillNotice}</AlertDescription>
 							</Alert>
 						{/if}
 

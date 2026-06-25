@@ -26,6 +26,11 @@ export interface ListJobsForUserInput {
 	sort?: 'latest' | 'oldest';
 }
 
+function positiveInteger(value: unknown, fallback: number) {
+	const number = Number(value);
+	return Number.isFinite(number) && number > 0 ? Math.floor(number) : fallback;
+}
+
 export async function createJob(userId: string, input: CreateJobInput) {
 	await ensureWallet(userId);
 	if (input.sourceAssetId) {
@@ -91,7 +96,8 @@ export async function getJobForUser(jobId: string, userId: string, isAdmin = fal
 		.select({ output: generationOutputs, asset: assets })
 		.from(generationOutputs)
 		.innerJoin(assets, eq(generationOutputs.assetId, assets.id))
-		.where(eq(generationOutputs.jobId, jobId));
+		.where(and(eq(generationOutputs.jobId, jobId), isNull(assets.deletedAt)))
+		.orderBy(asc(generationOutputs.position));
 	const outputs = await Promise.all(
 		outputRows.map(async ({ output, asset }) => ({
 			id: output.id,
@@ -106,8 +112,8 @@ export async function getJobForUser(jobId: string, userId: string, isAdmin = fal
 
 export async function listJobsForUser(userId: string, input: number | ListJobsForUserInput = 30) {
 	const options = typeof input === 'number' ? { pageSize: input } : input;
-	const page = Math.max(1, options.page ?? 1);
-	const pageSize = Math.max(1, Math.min(options.pageSize ?? 30, 100));
+	const requestedPage = positiveInteger(options.page, 1);
+	const pageSize = Math.min(positiveInteger(options.pageSize, 30), 100);
 	const filters = [
 		eq(generationJobs.userId, userId),
 		options.tool ? eq(generationJobs.tool, options.tool) : undefined,
@@ -115,6 +121,8 @@ export async function listJobsForUser(userId: string, input: number | ListJobsFo
 	].filter(Boolean);
 	const where = and(...filters);
 	const [{ total }] = await db.select({ total: count() }).from(generationJobs).where(where);
+	const totalPages = Math.max(1, Math.ceil(total / pageSize));
+	const page = Math.min(requestedPage, totalPages);
 	const jobs = await db
 		.select()
 		.from(generationJobs)
@@ -125,7 +133,14 @@ export async function listJobsForUser(userId: string, input: number | ListJobsFo
 		.limit(pageSize)
 		.offset((page - 1) * pageSize);
 	const items = await Promise.all(jobs.map((job) => getJobForUser(job.id, userId)));
-	return Object.assign(items, { total, page, pageSize });
+	return Object.assign(items, {
+		total,
+		page,
+		pageSize,
+		totalPages,
+		hasPreviousPage: page > 1,
+		hasNextPage: page < totalPages
+	});
 }
 
 export async function retryJob(jobId: string, userId: string, isAdmin = false) {
@@ -165,6 +180,29 @@ export async function deleteAssetForUser(assetId: string, userId: string) {
 	if (!asset) return false;
 	await storageProvider.deleteObject(asset.objectKey);
 	await db.update(assets).set({ deletedAt: new Date() }).where(eq(assets.id, asset.id));
+	return true;
+}
+
+export async function deleteJobOutputAssetForUser(jobId: string, assetId: string, userId: string) {
+	const [row] = await db
+		.select({ asset: assets })
+		.from(generationOutputs)
+		.innerJoin(generationJobs, eq(generationOutputs.jobId, generationJobs.id))
+		.innerJoin(assets, eq(generationOutputs.assetId, assets.id))
+		.where(
+			and(
+				eq(generationOutputs.jobId, jobId),
+				eq(generationOutputs.assetId, assetId),
+				eq(generationJobs.userId, userId),
+				eq(assets.userId, userId),
+				isNull(assets.deletedAt)
+			)
+		)
+		.limit(1);
+
+	if (!row) return false;
+	await storageProvider.deleteObject(row.asset.objectKey);
+	await db.update(assets).set({ deletedAt: new Date() }).where(eq(assets.id, row.asset.id));
 	return true;
 }
 

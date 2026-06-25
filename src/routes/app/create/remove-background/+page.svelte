@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { page } from '$app/state';
+	import { onDestroy, onMount } from 'svelte';
 	import BackgroundPreviewPanel from '$lib/components/app/create-remove-background/background-preview-panel.svelte';
 	import ResultEmpty from '$lib/components/app/create-remove-background/result-empty.svelte';
 	import {
@@ -39,9 +40,14 @@
 	let preview = $state('');
 	let error = $state('');
 	let activeJob = $state<GenerationJob>();
+	let prefillNotice = $state('');
 
 	onDestroy(() => {
 		revokePreview();
+	});
+
+	onMount(() => {
+		void prefillFromHistory();
 	});
 
 	function revokePreview() {
@@ -90,6 +96,26 @@
 
 	function setZoom(zoom: number) {
 		form.setFieldValue('zoom', Math.max(50, Math.min(180, zoom)));
+	}
+
+	async function prefillFromHistory() {
+		const jobId = page.url.searchParams.get('fromJob');
+		if (!jobId) return;
+
+		const response = await fetch(`/api/jobs/${jobId}`);
+		if (!response.ok) return;
+		const payload = (await response.json()) as { job?: GenerationJob };
+		const job = payload.job;
+		if (!job || job.tool !== 'remove-background') return;
+
+		const parameters = job.parameters ?? {};
+		if (
+			typeof parameters.previewBackground === 'string' &&
+			previewBackgrounds.some((background) => background.id === parameters.previewBackground)
+		) {
+			form.setFieldValue('previewBackground', parameters.previewBackground as PreviewBackgroundId);
+		}
+		prefillNotice = '已加载历史任务参数；开始抠图前请重新上传需要处理的图片。';
 	}
 
 	function validateSubmission() {
@@ -195,6 +221,12 @@
 						<Alert variant="destructive" class="mb-5">
 							<CircleAlert class="size-4" />
 							<AlertDescription>{error}</AlertDescription>
+						</Alert>
+					{/if}
+
+					{#if prefillNotice}
+						<Alert class="mb-5 border-primary/20 bg-primary/5 text-[#4f3de0]">
+							<AlertDescription>{prefillNotice}</AlertDescription>
 						</Alert>
 					{/if}
 
