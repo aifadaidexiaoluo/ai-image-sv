@@ -23,7 +23,7 @@ Copy `.env.example` to a local environment file and set `DATABASE_URL`, `ORIGIN`
 
 TypeScript strict mode is enabled. Let Prettier define whitespace (existing code uses tabs) and Tailwind class ordering. Use camelCase for variables/functions and kebab-case for UI component files, matching `button/button.svelte` and `alert-dialog/alert-dialog-content.svelte`. Re-export each primitive through its folder's `index.ts`; use `$lib` aliases instead of long relative imports. Keep browser-safe utilities in `src/lib` and secrets or database access in `src/lib/server`.
 
-When building UI, prefer existing primitives from `src/lib/components/ui` before adding bespoke components. Use the existing `Carousel` component for carousel interactions when it fits the feature.
+When building UI, prefer existing primitives from `src/lib/components/ui` before adding bespoke components. Use the existing `Carousel` component for carousel interactions when it fits the feature. Use `@tanstack/svelte-form` for form state, validation, and submission flows. Use the shared `cn` function for conditional or composed class names instead of inline template-string class concatenation.
 
 ## Testing Guidelines
 

@@ -78,7 +78,7 @@ export const sceneTemplates = [
 		category: 'home',
 		name: '简约客厅',
 		icon: Armchair,
-		image: '/images/app/products/amber-care.png',
+		image: '/images/app/create-scene/living-room.png',
 		tone: 'from-amber-50 to-white'
 	},
 	{
@@ -86,7 +86,7 @@ export const sceneTemplates = [
 		category: 'beauty',
 		name: '浴室台面',
 		icon: Droplets,
-		image: '/images/app/products/skincare-cream.png',
+		image: '/images/app/create-scene/bathroom-counter.png',
 		tone: 'from-sky-50 to-white'
 	},
 	{
@@ -94,7 +94,7 @@ export const sceneTemplates = [
 		category: 'food',
 		name: '厨房台面',
 		icon: Utensils,
-		image: '/images/app/products/amber-care.png',
+		image: '/images/app/create-scene/kitchen-counter.png',
 		tone: 'from-orange-50 to-white'
 	},
 	{
@@ -102,7 +102,7 @@ export const sceneTemplates = [
 		category: 'home',
 		name: '卧室床头柜',
 		icon: Home,
-		image: '/images/app/products/perfume-main.png',
+		image: '/images/app/create-scene/bedside.png',
 		tone: 'from-stone-100 to-white'
 	},
 	{
@@ -110,7 +110,7 @@ export const sceneTemplates = [
 		category: 'beauty',
 		name: '化妆台',
 		icon: Sparkles,
-		image: '/images/app/products/skincare-cream.png',
+		image: '/images/app/create-scene/vanity.png',
 		tone: 'from-pink-50 to-white'
 	},
 	{
@@ -118,7 +118,7 @@ export const sceneTemplates = [
 		category: 'digital',
 		name: '书桌办公',
 		icon: BriefcaseBusiness,
-		image: '/images/app/products/earbuds-white.png',
+		image: '/images/app/create-scene/desk.png',
 		tone: 'from-blue-50 to-white'
 	},
 	{
@@ -126,7 +126,7 @@ export const sceneTemplates = [
 		category: 'outdoor',
 		name: '户外野餐',
 		icon: Sun,
-		image: '/images/home/pink-beauty.png',
+		image: '/images/app/create-scene/picnic.png',
 		tone: 'from-lime-50 to-white'
 	},
 	{
@@ -134,7 +134,7 @@ export const sceneTemplates = [
 		category: 'food',
 		name: '咖啡馆',
 		icon: Coffee,
-		image: '/images/app/products/perfume-main.png',
+		image: '/images/app/create-scene/cafe.png',
 		tone: 'from-yellow-50 to-white'
 	},
 	{
@@ -142,7 +142,7 @@ export const sceneTemplates = [
 		category: 'festival',
 		name: '节日礼盒',
 		icon: BadgePercent,
-		image: '/images/app/products/skincare-cream.png',
+		image: '/images/app/create-scene/gift.png',
 		tone: 'from-red-50 to-white'
 	},
 	{
@@ -150,7 +150,7 @@ export const sceneTemplates = [
 		category: 'home',
 		name: '自然光影',
 		icon: Leaf,
-		image: '/images/app/products/amber-care.png',
+		image: '/images/app/create-scene/natural-light.png',
 		tone: 'from-emerald-50 to-white'
 	},
 	{
@@ -158,7 +158,7 @@ export const sceneTemplates = [
 		category: 'fashion',
 		name: '极简背景',
 		icon: Palette,
-		image: '/images/app/products/perfume-main.png',
+		image: '/images/app/create-scene/minimal.png',
 		tone: 'from-slate-50 to-white'
 	}
 ] as const;
