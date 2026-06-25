@@ -13,7 +13,7 @@
 <svelte:head><title>运营后台 - DesignAI</title></svelte:head>
 <h1 class="text-2xl font-bold">运营概览</h1>
 <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-	{#each metrics as metric}<div class="rounded-2xl border bg-white p-5">
+	{#each metrics as metric (metric[0])}<div class="rounded-2xl border bg-white p-5">
 			<p class="text-sm text-muted-foreground">{metric[0]}</p>
 			<strong class="mt-2 block text-3xl">{metric[1]}</strong>
 		</div>{/each}
@@ -25,7 +25,9 @@
 	<section class="overflow-hidden rounded-2xl border bg-white">
 		<h2 class="border-b p-4 font-semibold">最新用户</h2>
 		<div class="divide-y">
-			{#each data.users as item}<div class="flex items-center justify-between gap-3 p-4 text-sm">
+			{#each data.users as item (item.id)}<div
+					class="flex items-center justify-between gap-3 p-4 text-sm"
+				>
 					<div class="min-w-0">
 						<p class="truncate font-medium">{item.name}</p>
 						<p class="truncate text-muted-foreground">{item.email}</p>
@@ -44,7 +46,9 @@
 	<section class="overflow-hidden rounded-2xl border bg-white">
 		<h2 class="border-b p-4 font-semibold">最新任务</h2>
 		<div class="divide-y">
-			{#each data.jobs as job}<div class="flex items-center justify-between gap-3 p-4 text-sm">
+			{#each data.jobs as job (job.id)}<div
+					class="flex items-center justify-between gap-3 p-4 text-sm"
+				>
 					<div class="min-w-0">
 						<p class="font-medium">{job.tool}</p>
 						<p class="truncate text-xs text-muted-foreground">{job.id}</p>

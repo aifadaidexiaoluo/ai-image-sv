@@ -14,7 +14,7 @@
 	title="常见问题"
 	description="关于图片生成、积分、存储和账户安全的说明。"
 	><div class="mx-auto max-w-3xl space-y-3">
-		{#each questions as item}<details class="rounded-2xl border bg-white p-5">
+		{#each questions as item (item[0])}<details class="rounded-2xl border bg-white p-5">
 				<summary class="cursor-pointer font-semibold">{item[0]}</summary>
 				<p class="mt-3 text-sm leading-6 text-muted-foreground">{item[1]}</p>
 			</details>{/each}

@@ -14,9 +14,9 @@
 		Sparkles
 	} from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
+	import type { GenerationJob, GenerationProviderId } from '$lib/types/jobs';
 
 	type GenerationMode = 'prompt' | 'reference';
-	type Provider = 'auto' | 'openai' | 'tongyi';
 	type ProductStyleId =
 		| 'commerce-white'
 		| 'lifestyle'
@@ -28,23 +28,11 @@
 	type ProductFormValues = {
 		generationMode: GenerationMode;
 		prompt: string;
-		provider: Provider;
+		provider: GenerationProviderId;
 		count: number;
 		aspectRatio: string;
 		size: string;
 		styleIds: ProductStyleId[];
-	};
-	type Output = { id?: string; assetId?: string; position: number; url: string; mimeType?: string };
-	type GeneratedJob = {
-		id: string;
-		tool: string;
-		status: string;
-		stage: string;
-		progress: number | null;
-		completedCount: number;
-		totalCount: number;
-		errorMessage?: string | null;
-		outputs?: Output[];
 	};
 
 	const productStyles = [
@@ -113,7 +101,7 @@
 	let file = $state<File>();
 	let preview = $state('');
 	let error = $state('');
-	let activeJob = $state<GeneratedJob>();
+	let activeJob = $state<GenerationJob>();
 
 	function selectFile(event: Event) {
 		const selected = (event.currentTarget as HTMLInputElement).files?.[0];

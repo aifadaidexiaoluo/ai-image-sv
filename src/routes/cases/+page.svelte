@@ -9,7 +9,9 @@
 	title="看看 AI 如何改善商品表达"
 	description="从 3C 数码到美妆个护，使用一致的工作流生成适合投放的电商视觉。"
 	><div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-		{#each caseStudies as item}<article class="overflow-hidden rounded-2xl border bg-white">
+		{#each caseStudies as item (item.id)}<article
+				class="overflow-hidden rounded-2xl border bg-white"
+			>
 				<img src={item.image} alt={item.title} class="aspect-square w-full object-cover" />
 				<div class="p-5">
 					<h2 class="font-semibold">{item.title}</h2>

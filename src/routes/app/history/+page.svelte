@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { toolLabels, toolTypeLabels } from '$lib/app-catalog';
 	import { Download, Eye, MoreHorizontal, Pencil, Search, SlidersHorizontal } from '@lucide/svelte';
 	import { untrack } from 'svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 	let selectedId = $state(untrack(() => data.jobs[0]?.id ?? ''));
@@ -13,12 +15,12 @@
 	];
 	const selected = $derived(data.jobs.find((job) => job?.id === selectedId) ?? data.jobs[0]);
 
-	function thumbnail(job: any) {
+	function thumbnail(job: PageData['jobs'][number] | undefined) {
 		return job?.outputs?.[0]?.url ?? '/images/app/products/perfume-main.png';
 	}
 
-	function hrefFor(params: Record<string, string | number | undefined>) {
-		const search = new URLSearchParams();
+	function searchFor(params: Record<string, string | number | undefined>) {
+		const search = new SvelteURLSearchParams();
 		if (data.filters.tool && data.filters.tool !== 'all') search.set('tool', data.filters.tool);
 		if (data.filters.keyword) search.set('keyword', data.filters.keyword);
 		if (data.filters.sort && data.filters.sort !== 'latest') search.set('sort', data.filters.sort);
@@ -27,7 +29,7 @@
 			else search.set(key, String(value));
 		}
 		const text = search.toString();
-		return text ? `/app/history?${text}` : '/app/history';
+		return text ? `?${text}` : '';
 	}
 </script>
 
@@ -60,9 +62,9 @@
 <div class="grid gap-5 xl:grid-cols-[1fr_320px]">
 	<section>
 		<div class="mb-4 flex flex-wrap gap-2">
-			{#each tabs as tab}
+			{#each tabs as tab (tab.id)}
 				<a
-					href={hrefFor({ tool: tab.id, page: 1 })}
+					href={resolve(`/app/history${searchFor({ tool: tab.id, page: 1 })}` as '/app/history')}
 					class={`h-10 rounded-lg px-5 py-2 text-sm font-bold ${data.filters.tool === tab.id || (!data.filters.tool && tab.id === 'all') ? 'bg-primary text-white' : 'border border-[#dde2f2] bg-white text-[#65708a]'}`}
 					>{tab.label}</a
 				>
@@ -116,16 +118,20 @@
 							>
 							<span class="flex items-center gap-2 self-center">
 								<a
-									href={`/api/jobs/${job.id}`}
+									href={resolve('/api/jobs/[id]', { id: job.id })}
 									class="grid size-9 place-items-center rounded-lg border border-[#dde2f2] text-primary"
 									><Eye class="size-4" /></a
 								>
-								{#if job.outputs?.[0]}<a
+								{#if job.outputs?.[0]}
+									<!-- eslint-disable svelte/no-navigation-without-resolve -->
+									<a
 										href={job.outputs[0].url}
 										target="_blank"
 										class="grid size-9 place-items-center rounded-lg border border-[#dde2f2] text-primary"
 										><Download class="size-4" /></a
-									>{/if}
+									>
+									<!-- eslint-enable svelte/no-navigation-without-resolve -->
+								{/if}
 								<span
 									class="grid size-9 place-items-center rounded-lg border border-[#dde2f2] text-primary"
 									><MoreHorizontal class="size-4" /></span
@@ -143,14 +149,17 @@
 			<span>共 {data.total} 条</span>
 			<a
 				class="rounded-lg border border-[#dde2f2] bg-white px-3 py-2"
-				href={hrefFor({ page: Math.max(1, data.page - 1) })}>上一页</a
+				href={resolve(
+					`/app/history${searchFor({ page: Math.max(1, data.page - 1) })}` as '/app/history'
+				)}>上一页</a
 			>
 			<span class="rounded-lg border border-primary bg-white px-3 py-2 text-primary"
 				>{data.page}</span
 			>
 			<a
 				class="rounded-lg border border-[#dde2f2] bg-white px-3 py-2"
-				href={hrefFor({ page: data.page + 1 })}>下一页</a
+				href={resolve(`/app/history${searchFor({ page: data.page + 1 })}` as '/app/history')}
+				>下一页</a
 			>
 		</div>
 	</section>
@@ -187,12 +196,12 @@
 				</div>
 			</div>
 			<a
-				href="/app/create/product"
+				href={resolve('/app/create/product')}
 				class="mt-6 flex h-11 items-center justify-center rounded-xl bg-primary font-black text-white"
 				>再次生成</a
 			>
 			<a
-				href="/app/create/product"
+				href={resolve('/app/create/product')}
 				class="mt-3 flex h-11 items-center justify-center rounded-xl border border-primary font-black text-primary"
 				>编辑并重新生成</a
 			>

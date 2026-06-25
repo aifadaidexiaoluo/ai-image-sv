@@ -14,7 +14,9 @@
 	title="四步完成第一组商品图"
 	description="无需设计经验，从一张商品原图开始即可。"
 	><div class="mx-auto grid max-w-4xl gap-4">
-		{#each steps as step, index}<article class="flex gap-5 rounded-2xl border bg-white p-6">
+		{#each steps as step, index (step[0])}<article
+				class="flex gap-5 rounded-2xl border bg-white p-6"
+			>
 				<span
 					class="grid size-10 shrink-0 place-items-center rounded-full bg-primary font-bold text-white"
 					>{index + 1}</span

@@ -46,7 +46,7 @@
 		>
 		<nav class="mt-8 space-y-3">
 			{#each navigation as item (item.href)}<a
-					href={item.href}
+					href={resolve(item.href as '/app')}
 					class={`flex h-12 items-center gap-4 rounded-xl px-4 text-[15px] font-bold transition ${isActive(item.href) ? 'bg-primary/10 text-primary shadow-[0_10px_24px_rgba(91,61,245,0.1)]' : 'text-[#68738d] hover:bg-[#f5f2ff] hover:text-primary'}`}
 					><item.icon class="size-5 stroke-[1.9]" />{item.label}</a
 				>{/each}

@@ -46,7 +46,7 @@
 <p class="mt-2 text-sm text-[#65708a]">管理您的账户信息、偏好设置与安全</p>
 
 <div class="mt-8 flex flex-wrap gap-8 border-b border-[#dfe3f2]">
-	{#each tabs as [id, label]}
+	{#each tabs as [id, label] (id)}
 		<button
 			onclick={() => (activeTab = id)}
 			class={`border-b-2 pb-4 text-sm font-black ${activeTab === id ? 'border-primary text-primary' : 'border-transparent text-[#65708a]'}`}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { ArrowLeft, Sparkles } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 
@@ -26,7 +27,7 @@
 	<main class="flex min-h-screen items-center justify-center p-6 sm:p-10">
 		<div class="w-full max-w-md">
 			<a
-				href="/"
+				href={resolve('/')}
 				class="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
 			>
 				<ArrowLeft class="size-4" />

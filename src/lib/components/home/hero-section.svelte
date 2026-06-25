@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { ArrowRight, CirclePlay, Image, Play, Sparkles, WandSparkles, Zap } from '@lucide/svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as m from '$lib/paraglide/messages';
@@ -54,7 +55,7 @@
 			</p>
 			<div class="mt-8 flex items-center gap-4">
 				<a
-					href="/app/create/product"
+					href={resolve('/app/create/product')}
 					class="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(91,61,245,.27)] transition hover:-translate-y-0.5 hover:bg-[#4f31dc]"
 				>
 					{m.home_start_design()}

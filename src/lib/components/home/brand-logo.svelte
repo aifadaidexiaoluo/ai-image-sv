@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import * as m from '$lib/paraglide/messages';
 
 	let { compact = false }: { compact?: boolean } = $props();
 </script>
 
-<a href="/" class="inline-flex items-center gap-2.5" aria-label={m.home_brand()}>
+<a href={resolve('/')} class="inline-flex items-center gap-2.5" aria-label={m.home_brand()}>
 	<span
 		class="relative grid size-9 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-[#7759ff] to-[#4d2bea] shadow-[0_7px_18px_rgba(91,61,245,0.28)]"
 	>

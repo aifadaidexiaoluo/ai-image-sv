@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { sceneCategories, sceneTemplates } from '$lib/app-catalog';
 	import JobCard from '$lib/components/app/job-card.svelte';
+	import type { GenerationJob } from '$lib/types/jobs';
 	import {
 		CloudUpload,
 		Eye,
@@ -23,18 +24,6 @@
 		| 'bottom-left'
 		| 'bottom'
 		| 'bottom-right';
-	type Output = { id?: string; assetId?: string; position: number; url: string; mimeType?: string };
-	type GeneratedJob = {
-		id: string;
-		tool: string;
-		status: string;
-		stage: string;
-		progress: number | null;
-		completedCount: number;
-		totalCount: number;
-		errorMessage?: string | null;
-		outputs?: Output[];
-	};
 
 	let category = $state<SceneCategoryId>('all');
 	let selectedSceneId = $state('living-room');
@@ -47,7 +36,7 @@
 	let preview = $state('');
 	let loading = $state(false);
 	let error = $state('');
-	let activeJob = $state<GeneratedJob>();
+	let activeJob = $state<GenerationJob>();
 
 	const filteredScenes = $derived(
 		category === 'all'
@@ -228,7 +217,7 @@
 					{/each}
 
 					<label
-						class="grid h-[154px] cursor-pointer place-items-center rounded-[8px] border border-dashed border-primary/35 bg-[#fbfaff] text-center text-primary transition hover:border-primary"
+						class="grid h-38.5 cursor-pointer place-items-center rounded-[8px] border border-dashed border-primary/35 bg-[#fbfaff] text-center text-primary transition hover:border-primary"
 					>
 						<span class="px-4 text-[14px] font-black">
 							<UploadCloud class="mx-auto mb-3 size-8" />

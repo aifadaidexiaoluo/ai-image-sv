@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { ImagePlus, Sparkles, UploadCloud } from '@lucide/svelte';
+	import type { GenerationJob, GenerationProviderId, GenerationToolId } from '$lib/types/jobs';
 	import JobCard from './job-card.svelte';
 
 	let {
@@ -9,20 +10,20 @@
 		description,
 		requireSource = false
 	} = $props<{
-		tool: 'product' | 'scene' | 'remove-background';
+		tool: GenerationToolId;
 		title: string;
 		description: string;
 		requireSource?: boolean;
 	}>();
 	let prompt = $state('');
-	let provider = $state<'auto' | 'openai' | 'tongyi'>('auto');
+	let provider = $state<GenerationProviderId>('auto');
 	let count = $state(untrack(() => (tool === 'remove-background' ? 1 : 4)));
 	let aspectRatio = $state('1:1');
 	let file = $state<File>();
 	let preview = $state('');
 	let loading = $state(false);
 	let error = $state('');
-	let activeJob = $state<any>();
+	let activeJob = $state<GenerationJob>();
 
 	function selectFile(event: Event) {
 		const selected = (event.currentTarget as HTMLInputElement).files?.[0];

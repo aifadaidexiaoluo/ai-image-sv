@@ -1,4 +1,4 @@
-import { asc, eq, gt } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { client, db } from '$lib/server/db';
 import { generationJobs, jobEvents } from '$lib/server/db/schema';
 

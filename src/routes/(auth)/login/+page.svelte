@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import AuthShell from '$lib/components/auth/auth-shell.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import type { ActionData } from './$types';
@@ -34,7 +35,7 @@
 			/>
 		</label>
 		<div class="flex justify-end">
-			<a class="text-sm text-primary hover:underline" href="/forgot-password"
+			<a class="text-sm text-primary hover:underline" href={resolve('/forgot-password')}
 				>{m.auth_forgot_password()}</a
 			>
 		</div>
@@ -46,7 +47,7 @@
 		>
 		<p class="text-center text-sm text-muted-foreground">
 			{m.auth_no_account()}
-			<a href="/register" class="font-medium text-primary hover:underline"
+			<a href={resolve('/register')} class="font-medium text-primary hover:underline"
 				>{m.auth_register_now()}</a
 			>
 		</p>

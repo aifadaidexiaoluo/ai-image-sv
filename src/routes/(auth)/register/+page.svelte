@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import AuthShell from '$lib/components/auth/auth-shell.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import type { ActionData } from './$types';
@@ -58,7 +59,9 @@
 		>
 		<p class="text-center text-sm text-muted-foreground">
 			{m.auth_have_account()}
-			<a href="/login" class="font-medium text-primary hover:underline">{m.auth_login_now()}</a>
+			<a href={resolve('/login')} class="font-medium text-primary hover:underline"
+				>{m.auth_login_now()}</a
+			>
 		</p>
 	</form>
 </AuthShell>

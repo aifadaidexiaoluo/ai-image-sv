@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { categories, templates, type TemplateCategory } from '$lib/components/home/home-content';
 	import InfoPage from '$lib/components/marketing/info-page.svelte';
 	let active = $state<TemplateCategory>('all');
@@ -16,7 +17,7 @@
 	title="从好模板开始，更快完成设计"
 	description="选择适合商品和营销场景的模板，直接进入 AI 工作台继续编辑。"
 	><div class="flex gap-2 overflow-x-auto pb-4">
-		{#each categories as category}<button
+		{#each categories as category (category.id)}<button
 				onclick={() => (active = category.id)}
 				class="shrink-0 rounded-full px-4 py-2 text-sm"
 				class:bg-primary={active === category.id}
@@ -24,8 +25,10 @@
 			>{/each}
 	</div>
 	<div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-		{#each filtered as item}<a
-				href={`/app/create/${item.category === 'scene' ? 'scene' : 'product'}?template=${item.id}`}
+		{#each filtered as item (item.id)}<a
+				href={resolve(
+					`/app/create/${item.category === 'scene' ? 'scene' : 'product'}?template=${item.id}` as '/app/create/product'
+				)}
 				class="group overflow-hidden rounded-2xl border bg-white shadow-sm"
 				><div class="aspect-square overflow-hidden">
 					<img

@@ -1,23 +1,13 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Check, Coins, FileText, Receipt, ShieldCheck, TimerReset } from '@lucide/svelte';
+	import { findPriceByCurrency, groupCatalogByProduct } from '$lib/billing/catalog';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 	let billing = $state<'month' | 'year'>('month');
 	let tab = $state<'plans' | 'credits'>('plans');
 	let loading = $state('');
-	let grouped = $derived(
-		Object.values(
-			data.catalog.reduce(
-				(result, row) => {
-					const id = row.product.id;
-					result[id] ??= { ...row.product, prices: [] as NonNullable<typeof row.price>[] };
-					if (row.price) result[id].prices.push(row.price);
-					return result;
-				},
-				{} as Record<string, any>
-			)
-		) as any[]
-	);
+	let grouped = $derived(groupCatalogByProduct(data.catalog));
 	const subscriptions = $derived(grouped.filter((item) => item.type === 'subscription'));
 	const creditPacks = $derived(grouped.filter((item) => item.type === 'credit_pack'));
 	const displayPlans = $derived([
@@ -86,7 +76,7 @@
 
 	function priceFor(slug: string) {
 		const product = subscriptions.find((item) => item.slug === slug);
-		return product?.prices.find((price: any) => price.currency === 'CNY');
+		return product ? findPriceByCurrency(product.prices) : undefined;
 	}
 
 	async function checkout(priceId: string) {
@@ -143,7 +133,7 @@
 				</div>
 			</div>
 			<div class="grid gap-4 lg:grid-cols-4">
-				{#each displayPlans as plan}
+				{#each displayPlans as plan (plan.slug)}
 					{@const price = priceFor(plan.slug)}
 					<article
 						class={`relative rounded-2xl border bg-white p-5 shadow-sm ${plan.popular ? 'border-primary ring-2 ring-primary/10' : 'border-[#e1e5f2]'}`}
@@ -165,7 +155,7 @@
 								¥{plan.price * 12} / 年
 							</p>{/if}
 						<ul class="mt-8 space-y-3">
-							{#each plan.features as feature}<li
+							{#each plan.features as feature (feature)}<li
 									class="flex gap-2 text-sm font-medium text-[#65708a]"
 								>
 									<Check class="mt-0.5 size-4 text-primary" />{feature}
@@ -189,7 +179,7 @@
 				{/each}
 			</div>
 			<div class="mt-8 grid gap-4 rounded-2xl border border-[#e1e5f2] bg-white p-5 md:grid-cols-4">
-				{#each [{ icon: TimerReset, title: '积分有效期', desc: '积分按自然月发放' }, { icon: Coins, title: '套餐自动续费', desc: '到期前 3 天提醒' }, { icon: Receipt, title: '发票服务', desc: '支持开具增值税电子发票' }, { icon: ShieldCheck, title: '安全保障', desc: '数据加密存储保障隐私' }] as item}
+				{#each [{ icon: TimerReset, title: '积分有效期', desc: '积分按自然月发放' }, { icon: Coins, title: '套餐自动续费', desc: '到期前 3 天提醒' }, { icon: Receipt, title: '发票服务', desc: '支持开具增值税电子发票' }, { icon: ShieldCheck, title: '安全保障', desc: '数据加密存储保障隐私' }] as item (item.title)}
 					<div class="flex gap-3">
 						<span class="grid size-10 place-items-center rounded-full bg-primary/10 text-primary"
 							><item.icon class="size-5" /></span
@@ -203,8 +193,8 @@
 			</div>
 		{:else}
 			<div class="grid gap-4 md:grid-cols-3">
-				{#each creditPacks as pack}
-					{@const price = pack.prices.find((item: any) => item.currency === 'CNY')}
+				{#each creditPacks as pack (pack.id)}
+					{@const price = findPriceByCurrency(pack.prices)}
 					<article class="rounded-2xl border border-[#e1e5f2] bg-white p-6 shadow-sm">
 						<h3 class="text-lg font-black text-[#121826]">{pack.name}</h3>
 						<p class="mt-6 text-4xl font-black text-primary">
@@ -229,7 +219,7 @@
 		<section class="rounded-2xl border border-[#e1e5f2] bg-white p-5 shadow-sm">
 			<div class="flex items-center justify-between">
 				<h2 class="font-black text-[#121826]">积分余额</h2>
-				<a href="/app/billing" class="text-sm font-bold text-primary">积分明细</a>
+				<a href={resolve('/app/billing')} class="text-sm font-bold text-primary">积分明细</a>
 			</div>
 			<div class="mt-5 rounded-2xl bg-gradient-to-br from-primary/15 to-violet-100 p-5">
 				<div class="flex items-center gap-4">
@@ -256,10 +246,10 @@
 		<section class="rounded-2xl border border-[#e1e5f2] bg-white p-5 shadow-sm">
 			<div class="flex items-center justify-between">
 				<h2 class="font-black text-[#121826]">积分使用记录</h2>
-				<a href="/app/history" class="text-sm font-bold text-primary">查看全部</a>
+				<a href={resolve('/app/history')} class="text-sm font-bold text-primary">查看全部</a>
 			</div>
 			<div class="mt-4 divide-y divide-[#eef1f7]">
-				{#each data.transactions.slice(0, 5) as transaction}
+				{#each data.transactions.slice(0, 5) as transaction (transaction.id)}
 					<div class="flex items-center justify-between py-3 text-sm">
 						<div class="flex gap-3">
 							<span class="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"

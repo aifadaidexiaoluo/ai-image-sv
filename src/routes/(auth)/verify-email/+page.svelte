@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import AuthShell from '$lib/components/auth/auth-shell.svelte';
 	import * as m from '$lib/paraglide/messages';
 </script>
@@ -8,7 +9,7 @@
 		{m.auth_verify_hint()}
 	</div>
 	<a
-		href="/login"
+		href={resolve('/login')}
 		class="mt-5 flex h-12 items-center justify-center rounded-xl bg-primary font-semibold text-white"
 		>{m.auth_back_login()}</a
 	>

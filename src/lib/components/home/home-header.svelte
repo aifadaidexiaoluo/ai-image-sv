@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { ChevronDown, Coins, Crown, Gift, Menu, X } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import UserMenu from '$lib/components/account/user-menu.svelte';
@@ -17,6 +18,10 @@
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') openMenu = null;
+	}
+
+	function resolveNavHref(href: string) {
+		return href.startsWith('#') ? resolve(`/${href}` as '/') : resolve(href as '/');
 	}
 </script>
 
@@ -51,14 +56,14 @@
 								{#each item.children as child (child.label)}
 									<a
 										class="block rounded-xl px-3 py-2.5 text-sm text-[#3d465d] transition hover:bg-[#f2efff] hover:text-primary"
-										href={child.href}>{child.label}</a
+										href={resolveNavHref(child.href)}>{child.label}</a
 									>
 								{/each}
 							</div>
 						{/if}
 					{:else}
 						<a
-							href={item.href}
+							href={resolveNavHref(item.href)}
 							class="relative flex h-10 items-center rounded-lg px-3 text-[14px] font-medium text-[#2e3548] transition hover:text-primary"
 							class:text-primary={item.href === '/'}
 						>
@@ -75,7 +80,7 @@
 		<div class="ml-auto hidden items-center gap-3 sm:flex">
 			{#if account}
 				<a
-					href="/app/billing"
+					href={resolve('/app/billing')}
 					class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-[#3c455a] hover:bg-primary/5 hover:text-primary"
 				>
 					<Coins class="size-4 text-[#ff9e37]" />{account.balance} 积分
@@ -88,19 +93,19 @@
 				<UserMenu user={account.user} />
 			{:else}
 				<a
-					href="/app/billing"
+					href={resolve('/app/billing')}
 					class="flex items-center gap-1.5 px-2 text-sm font-medium text-[#3c455a] hover:text-primary"
 				>
 					<Gift class="size-4 text-[#ff9e37]" />
 					{m.home_points()}
 				</a>
 				<a
-					href="/login"
+					href={resolve('/login')}
 					class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-[#283149] shadow-sm hover:text-primary"
 					>{m.home_login()}</a
 				>
 				<a
-					href="/app/create/product"
+					href={resolve('/app/create/product')}
 					class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_9px_24px_rgba(91,61,245,0.28)] transition hover:-translate-y-0.5 hover:bg-[#4e30df]"
 					>{m.home_trial()}</a
 				>
@@ -118,8 +123,8 @@
 			class="absolute inset-x-0 top-[76px] border-b bg-white p-4 shadow-lg sm:hidden"
 		>
 			<nav class="space-y-1">
-				{#each navItems as item}<a
-						href={item.href}
+				{#each navItems as item (item.label)}<a
+						href={resolveNavHref(item.href)}
 						class="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-primary/5"
 						>{item.label}</a
 					>{/each}
@@ -135,10 +140,10 @@
 					</div>
 				{:else}
 					<div class="grid grid-cols-2 gap-2 pt-3">
-						<a href="/login" class="rounded-xl border px-4 py-3 text-center text-sm"
+						<a href={resolve('/login')} class="rounded-xl border px-4 py-3 text-center text-sm"
 							>{m.home_login()}</a
 						><a
-							href="/app/create/product"
+							href={resolve('/app/create/product')}
 							class="rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white"
 							>{m.home_trial()}</a
 						>

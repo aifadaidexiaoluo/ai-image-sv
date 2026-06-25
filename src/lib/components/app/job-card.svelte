@@ -8,21 +8,34 @@
 		LoaderCircle,
 		RotateCcw
 	} from '@lucide/svelte';
+	import type {
+		GenerationJob,
+		GenerationJobStage,
+		GenerationJobStatus,
+		GenerationOutput
+	} from '$lib/types/jobs';
 
-	type Output = { id?: string; assetId?: string; position: number; url: string; mimeType?: string };
-	type Job = {
-		id: string;
-		tool: string;
-		status: string;
-		stage: string;
-		progress: number | null;
-		completedCount: number;
-		totalCount: number;
-		errorMessage?: string | null;
-		outputs?: Output[];
-	};
+	const jobStatuses = new Set<GenerationJobStatus>([
+		'queued',
+		'running',
+		'succeeded',
+		'partial',
+		'failed',
+		'canceled'
+	]);
+	const jobStages = new Set<GenerationJobStage>([
+		'queued',
+		'validating',
+		'preparing',
+		'submitting',
+		'generating',
+		'downloading',
+		'postprocessing',
+		'uploading',
+		'completed'
+	]);
 
-	const stageLabels: Record<string, string> = {
+	const stageLabels: Record<GenerationJobStage, string> = {
 		queued: '等待执行',
 		validating: '正在校验任务',
 		preparing: '正在准备素材',
@@ -33,8 +46,8 @@
 		uploading: '正在保存结果',
 		completed: '处理完成'
 	};
-	let { initialJob, compact = false }: { initialJob: Job; compact?: boolean } = $props();
-	let job = $state<Job>(
+	let { initialJob, compact = false }: { initialJob: GenerationJob; compact?: boolean } = $props();
+	let job = $state<GenerationJob>(
 		untrack(() => ({ ...initialJob, outputs: [...(initialJob.outputs ?? [])] }))
 	);
 	let message = $state(untrack(() => stageLabels[job.stage] ?? '正在处理'));
@@ -45,16 +58,24 @@
 		job.tool === 'product' ? '商品图生成' : job.tool === 'scene' ? '场景图编辑' : '智能抠图'
 	);
 
+	function isJobStatus(value: unknown): value is GenerationJobStatus {
+		return typeof value === 'string' && jobStatuses.has(value as GenerationJobStatus);
+	}
+
+	function isJobStage(value: unknown): value is GenerationJobStage {
+		return typeof value === 'string' && jobStages.has(value as GenerationJobStage);
+	}
+
 	function mergeEvent(payload: Record<string, unknown>) {
-		if (typeof payload.status === 'string') job.status = payload.status;
-		if (typeof payload.stage === 'string') job.stage = payload.stage;
+		if (isJobStatus(payload.status)) job.status = payload.status;
+		if (isJobStage(payload.stage)) job.stage = payload.stage;
 		if (typeof payload.progress === 'number' || payload.progress === null)
 			job.progress = payload.progress as number | null;
 		if (typeof payload.completedCount === 'number') job.completedCount = payload.completedCount;
 		if (typeof payload.totalCount === 'number') job.totalCount = payload.totalCount;
 		if (typeof payload.message === 'string') message = payload.message;
 		if (payload.output) {
-			const output = payload.output as Output;
+			const output = payload.output as GenerationOutput;
 			if (!job.outputs?.some((item) => item.position === output.position))
 				job.outputs = [...(job.outputs ?? []), output];
 		}
@@ -162,12 +183,15 @@
 						src={output.url}
 						alt={`生成结果 ${output.position + 1}`}
 						class="size-full object-cover"
-					/><a
+					/>
+					<!-- eslint-disable svelte/no-navigation-without-resolve -->
+					<a
 						href={output.url}
 						target="_blank"
 						class="absolute right-2 bottom-2 grid size-8 place-items-center rounded-lg bg-white/90 text-primary opacity-0 shadow transition group-hover:opacity-100"
 						aria-label="下载图片"><Download class="size-4" /></a
 					>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				</div>
 			{/each}
 		</div>

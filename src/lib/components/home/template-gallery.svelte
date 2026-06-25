@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { ArrowRight, ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { categories, templates, type TemplateCategory } from './home-content';
@@ -36,7 +37,7 @@
 				</h2>
 			</div>
 			<a
-				href="/templates"
+				href={resolve('/templates')}
 				class="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
 				>{m.home_view_all()} <ArrowRight class="size-4" /></a
 			>

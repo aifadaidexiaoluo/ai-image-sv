@@ -1,5 +1,6 @@
 <script lang="ts">
 	import JobCard from '$lib/components/app/job-card.svelte';
+	import type { GenerationJob } from '$lib/types/jobs';
 	import { Crop, Download, Expand, Move, RefreshCw, RotateCcw, UploadCloud } from '@lucide/svelte';
 
 	let file = $state<File>();
@@ -12,7 +13,7 @@
 	let hdMode = $state(false);
 	let loading = $state(false);
 	let error = $state('');
-	let activeJob = $state<any>();
+	let activeJob = $state<GenerationJob>();
 
 	const backgrounds = [
 		{ id: 'transparent', name: '无', class: 'checkerboard' },
@@ -101,12 +102,14 @@
 				onchange={selectFile}
 			/></label
 		>
+		<!-- eslint-disable svelte/no-navigation-without-resolve -->
 		<a
 			href={preview || undefined}
 			download
 			class="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20"
 			><Download class="size-4" />下载</a
 		>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	</div>
 </div>
 
@@ -158,7 +161,7 @@
 		<div
 			class="mx-auto mt-4 flex w-max overflow-hidden rounded-xl border border-[#dde2f2] bg-white shadow-sm"
 		>
-			{#each [{ label: '撤销', icon: RotateCcw }, { label: '恢复', icon: RefreshCw }, { label: '移动', icon: Move }, { label: '裁剪', icon: Crop }] as tool}
+			{#each [{ label: '撤销', icon: RotateCcw }, { label: '恢复', icon: RefreshCw }, { label: '移动', icon: Move }, { label: '裁剪', icon: Crop }] as tool (tool.label)}
 				<button
 					class="grid min-w-20 place-items-center gap-1 border-r border-[#eef1f7] px-4 py-3 text-xs font-bold text-[#65708a] last:border-r-0"
 					><tool.icon class="size-5" />{tool.label}</button
@@ -197,7 +200,7 @@
 				>
 			</div>
 			<div class="mt-5 flex gap-3">
-				{#each backgrounds.slice(0, 4) as item}
+				{#each backgrounds.slice(0, 4) as item (item.id)}
 					<button
 						aria-label={item.name}
 						onclick={() => (background = item.id)}
@@ -213,7 +216,7 @@
 		<section class="rounded-2xl border border-[#e1e5f2] bg-white p-5 shadow-sm">
 			<h2 class="font-black text-[#121826]">场景预览</h2>
 			<div class="mt-4 grid grid-cols-3 gap-3 text-center text-xs font-bold text-[#65708a]">
-				{#each backgrounds as item}
+				{#each backgrounds as item (item.id)}
 					<button onclick={() => (background = item.id)}>
 						<div
 							class={`grid h-20 place-items-center rounded-lg border ${item.class} ${background === item.id ? 'border-primary' : 'border-[#dde2f2]'}`}
@@ -227,7 +230,7 @@
 		</section>
 		<section class="rounded-2xl border border-[#e1e5f2] bg-white p-5 shadow-sm">
 			<h2 class="font-black text-[#121826]">抠图优化</h2>
-			{#each [{ label: '保留阴影', value: keepShadow }, { label: '边缘平滑', value: smoothEdge }, { label: '高清模式', value: hdMode }] as option, index}
+			{#each [{ label: '保留阴影', value: keepShadow }, { label: '边缘平滑', value: smoothEdge }, { label: '高清模式', value: hdMode }] as option, index (option.label)}
 				<label class="mt-4 flex items-center justify-between text-sm font-bold text-[#172033]">
 					{option.label}{#if index === 2}<span
 							class="ml-2 rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">VIP</span

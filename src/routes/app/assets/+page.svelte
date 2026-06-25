@@ -60,7 +60,7 @@
 
 <section class="overflow-hidden rounded-2xl border border-[#e1e5f2] bg-white shadow-sm">
 	<div class="flex overflow-x-auto border-b border-[#eef1f7]">
-		{#each tabs as [id, label]}
+		{#each tabs as [id, label] (id)}
 			<button
 				onclick={() => (activeType = id)}
 				class={`h-14 shrink-0 border-b-2 px-6 text-sm font-black ${activeType === id ? 'border-primary text-primary' : 'border-transparent text-[#65708a]'}`}
@@ -91,7 +91,7 @@
 		>
 		<div class="flex items-center gap-2">
 			<span class="font-bold text-[#65708a]">颜色</span>
-			{#each colorSwatches as color}<span
+			{#each colorSwatches as color (color)}<span
 					class="size-4 rounded-full ring-1 ring-black/5"
 					style:background={color}
 				></span>{/each}
@@ -109,7 +109,7 @@
 		<aside class="border-r border-[#eef1f7] p-5">
 			<h2 class="font-black text-[#121826]">素材分类</h2>
 			<div class="mt-4 space-y-2">
-				{#each Object.entries(assetTypeLabels) as [id, label]}
+				{#each Object.entries(assetTypeLabels) as [id, label] (id)}
 					<button
 						onclick={() => (activeType = id)}
 						class={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-bold ${activeType === id ? 'bg-primary/10 text-primary' : 'text-[#65708a]'}`}
@@ -121,7 +121,7 @@
 			</div>
 			<h2 class="mt-8 font-black text-[#121826]">热门标签</h2>
 			<div class="mt-4 flex flex-wrap gap-2">
-				{#each tags as tag}<span
+				{#each tags as tag (tag)}<span
 						class="rounded-lg bg-[#f3f5fb] px-3 py-1.5 text-xs font-bold text-[#65708a]">{tag}</span
 					>{/each}
 			</div>
@@ -145,12 +145,14 @@
 										/></button
 									>
 								</form>
+								<!-- eslint-disable svelte/no-navigation-without-resolve -->
 								<a
 									href={asset.url}
 									target="_blank"
 									class="absolute right-3 bottom-3 grid size-9 place-items-center rounded-full bg-white/90 text-primary opacity-0 shadow transition group-hover:opacity-100"
 									><Download class="size-4" /></a
 								>
+								<!-- eslint-enable svelte/no-navigation-without-resolve -->
 								<span
 									class="absolute bottom-3 left-3 rounded-md bg-white/80 px-2 py-1 text-xs font-bold text-[#8a94ad]"
 									>{asset.mimeType.includes('png') ? 'PNG' : 'JPG'}</span
@@ -167,7 +169,7 @@
 						</article>
 					{/each}
 				{:else}
-					{#each assetShowcase as asset}
+					{#each assetShowcase as asset (asset.name)}
 						<article
 							class="group overflow-hidden rounded-xl border border-[#e1e5f2] bg-white opacity-80 shadow-sm"
 						>

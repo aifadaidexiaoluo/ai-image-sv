@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { CreditCard, LayoutDashboard, LogOut, Settings, ShieldCheck } from '@lucide/svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -16,8 +17,8 @@
 			.toUpperCase()
 	);
 
-	function navigate(href: string) {
-		void goto(href);
+	function navigate(href: '/app' | '/app/settings' | '/app/billing' | '/admin') {
+		void goto(resolve(href));
 	}
 </script>
 

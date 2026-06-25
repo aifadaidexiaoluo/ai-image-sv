@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { MessageCircle, Music2, Radio, Share2 } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import BrandLogo from './brand-logo.svelte';
@@ -21,9 +22,12 @@
 					<h3 class="text-sm font-semibold text-[#293044]">{group.title}</h3>
 					<ul class="mt-4 space-y-2.5">
 						{#each group.links as link (`${link.href}:${link.label}`)}<li>
-								<a href={link.href} class="text-xs text-[#737b8e] hover:text-primary"
-									>{link.label}</a
+								<!-- eslint-disable svelte/no-navigation-without-resolve -->
+								<a
+									href={link.href.startsWith('mailto:') ? link.href : resolve(link.href as '/')}
+									class="text-xs text-[#737b8e] hover:text-primary">{link.label}</a
 								>
+								<!-- eslint-enable svelte/no-navigation-without-resolve -->
 							</li>{/each}
 					</ul>
 				</div>
@@ -31,8 +35,8 @@
 			<div>
 				<h3 class="text-sm font-semibold text-[#293044]">{m.home_footer_follow()}</h3>
 				<div class="mt-5 flex gap-2.5">
-					{#each socialIcons as Icon}<a
-							href="/"
+					{#each socialIcons as Icon, index (index)}<a
+							href={resolve('/')}
 							aria-label="社交媒体"
 							class="grid size-8 place-items-center rounded-full bg-[#f0edff] text-primary transition hover:bg-primary hover:text-white"
 							><Icon class="size-4" /></a

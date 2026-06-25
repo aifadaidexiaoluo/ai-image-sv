@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	let { children }: { children: import('svelte').Snippet } = $props();
 </script>
 
 <div class="min-h-screen bg-[#f7f7fc]">
 	<header class="flex h-16 items-center justify-between border-b bg-white px-6">
-		<a href="/admin" class="font-bold text-primary">DesignAI 管理后台</a><a
-			href="/app"
+		<a href={resolve('/admin')} class="font-bold text-primary">DesignAI 管理后台</a><a
+			href={resolve('/app')}
 			class="text-sm text-muted-foreground">返回工作台</a
 		>
 	</header>

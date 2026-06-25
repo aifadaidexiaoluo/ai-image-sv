@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { ArrowRight, Bot, Download, Images, Layers3, ScanSearch, Sparkles } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import BrandLogo from './brand-logo.svelte';
@@ -38,7 +39,7 @@
 				{m.home_capabilities_title_line1()}<br />{m.home_capabilities_title_line2()}
 			</h2>
 			<a
-				href="/app/create/product"
+				href={resolve('/app/create/product')}
 				class="mt-9 inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(91,61,245,.25)] transition hover:-translate-y-0.5"
 				>{m.home_start_design()} <ArrowRight class="size-4" /></a
 			>
