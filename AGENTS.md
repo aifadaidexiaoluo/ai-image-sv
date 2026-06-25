@@ -23,6 +23,8 @@ Copy `.env.example` to a local environment file and set `DATABASE_URL`, `ORIGIN`
 
 TypeScript strict mode is enabled. Let Prettier define whitespace (existing code uses tabs) and Tailwind class ordering. Use camelCase for variables/functions and kebab-case for UI component files, matching `button/button.svelte` and `alert-dialog/alert-dialog-content.svelte`. Re-export each primitive through its folder's `index.ts`; use `$lib` aliases instead of long relative imports. Keep browser-safe utilities in `src/lib` and secrets or database access in `src/lib/server`.
 
+When building UI, prefer existing primitives from `src/lib/components/ui` before adding bespoke components. Use the existing `Carousel` component for carousel interactions when it fits the feature.
+
 ## Testing Guidelines
 
 No automated test runner or coverage threshold is currently configured. Treat `bun run check`, `bun run lint`, and `bun run build` as the required pre-PR verification suite. For new nontrivial behavior, add a suitable test framework in a focused change and colocate tests as `*.test.ts` near the code they cover.

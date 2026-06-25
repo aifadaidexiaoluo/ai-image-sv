@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { ImagePlus, Info, RefreshCw, Sparkles, UploadCloud } from '@lucide/svelte';
-	import JobCard from '$lib/components/app/job-card.svelte';
 	import { productStyles, promptSuggestions } from '$lib/app-catalog';
+	import JobCard from '$lib/components/app/job-card.svelte';
+	import { ImagePlus, Info, RefreshCw, Sparkles, UploadCloud } from '@lucide/svelte';
 
 	let generationMode = $state<'prompt' | 'reference'>('prompt');
 	let prompt = $state('');
@@ -81,9 +81,6 @@
 
 <svelte:head><title>商品图生成 - DesignAI</title></svelte:head>
 <div class="mb-6">
-	<p class="text-sm font-medium text-[#65708a]">
-		工作台 / <span class="text-[#121826]">商品图</span>
-	</p>
 	<h1 class="mt-8 text-3xl font-black text-[#121826]">商品图生成</h1>
 	<p class="mt-2 text-sm text-[#65708a]">从描述或参考图生成电商级商品图，让商品更出彩</p>
 </div>
