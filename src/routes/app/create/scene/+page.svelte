@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { sceneCategories, sceneTemplates } from '$lib/app-catalog';
+	import JobCard from '$lib/components/app/job-card.svelte';
 	import {
 		CloudUpload,
 		Eye,
@@ -9,8 +11,6 @@
 		UploadCloud,
 		X
 	} from '@lucide/svelte';
-	import JobCard from '$lib/components/app/job-card.svelte';
-	import { sceneCategories, sceneTemplates } from '$lib/app-catalog';
 
 	type SceneCategoryId = (typeof sceneCategories)[number]['id'];
 	type ProductPosition =
@@ -151,10 +151,7 @@
 
 <div class="mx-auto max-w-[1600px] pb-8">
 	<div class="mb-7">
-		<p class="text-[15px] font-medium text-[#65708a]">
-			工作台&nbsp; / &nbsp;<span class="font-semibold text-[#121826]">场景图</span>
-		</p>
-		<h1 class="mt-9 text-[30px] font-black leading-tight text-[#121826]">场景图编辑</h1>
+		<h1 class="text-[30px] font-black leading-tight text-[#121826]">场景图编辑</h1>
 		<p class="mt-2 text-[15px] text-[#65708a]">将商品融入真实场景，打造更具吸引力的营销视觉</p>
 	</div>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { createForm } from '@tanstack/svelte-form';
+	import { promptSuggestions } from '$lib/app-catalog';
+	import JobCard from '$lib/components/app/job-card.svelte';
 	import {
 		Check,
 		ChevronDown,
@@ -12,8 +13,7 @@
 		SlidersHorizontal,
 		Sparkles
 	} from '@lucide/svelte';
-	import JobCard from '$lib/components/app/job-card.svelte';
-	import { promptSuggestions } from '$lib/app-catalog';
+	import { createForm } from '@tanstack/svelte-form';
 
 	type GenerationMode = 'prompt' | 'reference';
 	type Provider = 'auto' | 'openai' | 'tongyi';
@@ -192,10 +192,7 @@
 
 <div class="mx-auto max-w-[1600px] pb-8">
 	<div class="mb-8">
-		<p class="text-[15px] font-medium text-[#65708a]">
-			工作台&nbsp; / &nbsp;<span class="font-semibold text-[#121826]">商品图</span>
-		</p>
-		<h1 class="mt-9 text-[30px] font-black leading-tight text-[#121826]">商品图生成</h1>
+		<h1 class="text-[30px] font-black leading-tight text-[#121826]">商品图生成</h1>
 		<p class="mt-2 text-[15px] text-[#65708a]">从描述或参考图生成电商级商品图，让商品更出彩</p>
 	</div>
 

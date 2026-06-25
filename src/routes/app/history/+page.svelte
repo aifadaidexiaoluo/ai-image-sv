@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { Download, Eye, MoreHorizontal, Pencil, Search, SlidersHorizontal } from '@lucide/svelte';
 	import { toolLabels, toolTypeLabels } from '$lib/app-catalog';
+	import { Download, Eye, MoreHorizontal, Pencil, Search, SlidersHorizontal } from '@lucide/svelte';
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 	let selectedId = $state(untrack(() => data.jobs[0]?.id ?? ''));

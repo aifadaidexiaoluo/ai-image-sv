@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Crop, Download, Expand, Move, RefreshCw, RotateCcw, UploadCloud } from '@lucide/svelte';
 	import JobCard from '$lib/components/app/job-card.svelte';
+	import { Crop, Download, Expand, Move, RefreshCw, RotateCcw, UploadCloud } from '@lucide/svelte';
 
 	let file = $state<File>();
 	let preview = $state('');
@@ -86,10 +86,7 @@
 <svelte:head><title>智能抠图 - DesignAI</title></svelte:head>
 <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 	<div>
-		<p class="text-sm font-medium text-[#65708a]">
-			工作台 / <span class="text-[#121826]">智能抠图</span>
-		</p>
-		<h1 class="mt-8 text-3xl font-black text-[#121826]">智能抠图</h1>
+		<h1 class="text-3xl font-black text-[#121826]">智能抠图</h1>
 		<p class="mt-2 text-sm text-[#65708a]">
 			一键智能识别主体，精准去除背景，轻松获取高质量透明素材
 		</p>
