@@ -1,0 +1,4 @@
+interface:
+  display_name: "TanStack Svelte Form"
+  short_description: "Svelte form implementation conventions"
+  default_prompt: "Use $tanstack-svelte-form to implement a SvelteKit form with @tanstack/svelte-form."

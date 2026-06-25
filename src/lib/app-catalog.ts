@@ -19,37 +19,37 @@ export const productStyles = [
 		id: 'commerce-white',
 		name: '电商白底',
 		description: '干净棚拍质感',
-		image: '/images/app/products/perfume-main.png'
+		image: '/images/app/create-product/commerce-white.png'
 	},
 	{
 		id: 'lifestyle',
 		name: '场景生活',
 		description: '自然生活场景',
-		image: '/images/app/products/amber-care.png'
+		image: '/images/app/create-product/lifestyle.png'
 	},
 	{
 		id: 'minimal-color',
 		name: '极简纯色',
 		description: '留白与品牌色',
-		image: '/images/app/products/skincare-cream.png'
+		image: '/images/app/create-product/minimal-color.png'
 	},
 	{
 		id: 'premium',
 		name: '高级质感',
 		description: '柔光与细节',
-		image: '/images/app/products/perfume-main.png'
+		image: '/images/app/create-product/premium.png'
 	},
 	{
 		id: 'render-3d',
 		name: '3D 渲染',
 		description: '科技产品表达',
-		image: '/images/app/products/earbuds-white.png'
+		image: '/images/app/create-product/render-3d.png'
 	},
 	{
 		id: 'illustration',
 		name: '手绘插画',
 		description: '轻盈装饰感',
-		image: '/images/app/products/skincare-cream.png'
+		image: '/images/app/create-product/illustration.png'
 	}
 ] as const;
 

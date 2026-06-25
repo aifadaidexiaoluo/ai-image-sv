@@ -137,10 +137,12 @@
 	});
 </script>
 
-<article class="overflow-hidden rounded-2xl border bg-white shadow-sm">
-	<div class="flex flex-wrap items-center justify-between gap-3 border-b p-4 sm:p-5">
-		<div class="flex items-center gap-3">
-			<div class="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+<article
+	class="overflow-hidden rounded-[18px] border border-[#e1e5f2] bg-white shadow-[0_14px_36px_rgba(61,72,120,0.05)]"
+>
+	<div class="flex items-start justify-between gap-3 border-b border-[#edf1f8] p-4">
+		<div class="flex min-w-0 items-center gap-3">
+			<div class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
 				{#if job.status === 'succeeded'}<CheckCircle2
 						class="size-5"
 					/>{:else if job.status === 'failed'}<CircleAlert
@@ -149,13 +151,15 @@
 						class="size-5 animate-spin"
 					/>{/if}
 			</div>
-			<div>
-				<h3 class="font-semibold">{title}</h3>
-				<p class="mt-0.5 text-xs text-muted-foreground">{message}</p>
+			<div class="min-w-0">
+				<h3 class="truncate text-[15px] font-black text-[#121826]">{title}</h3>
+				<p class="mt-1 line-clamp-2 text-xs font-medium leading-5 text-[#65708a]">{message}</p>
 			</div>
 		</div>
-		<div class="flex items-center gap-3 text-sm">
-			<span class="font-medium text-primary">{job.completedCount}/{job.totalCount}</span>
+		<div class="flex shrink-0 flex-col items-end gap-2 text-sm">
+			<span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-black text-primary">
+				{job.completedCount}/{job.totalCount}
+			</span>
 			{#if ['failed', 'partial'].includes(job.status)}<button
 					onclick={retry}
 					disabled={retrying}
@@ -165,8 +169,8 @@
 		</div>
 	</div>
 	{#if !terminal}
-		<div class="px-4 pt-4 sm:px-5">
-			<div class="h-2 overflow-hidden rounded-full bg-muted">
+		<div class="px-4 py-4">
+			<div class="h-2 overflow-hidden rounded-full bg-[#eef2f8]">
 				<div
 					class:animate-pulse={job.progress === null}
 					class="h-full rounded-full bg-primary transition-all duration-500"

@@ -42,8 +42,14 @@ export function buildGenerationPrompt(input: {
 	}
 
 	if (input.tool === 'scene') {
+		const customSceneTitle =
+			typeof parameters.customSceneTitle === 'string' ? parameters.customSceneTitle.trim() : '';
 		const scene = sceneLabels[String(parameters.sceneId ?? '')];
-		if (scene) parts.push(`将商品自然融合到${scene}`);
+		if (customSceneTitle) {
+			parts.push(`参考用户上传的「${customSceneTitle}」场景模板，将商品自然融合到画面中`);
+		} else if (scene) {
+			parts.push(`将商品自然融合到${scene}`);
+		}
 		if (parameters.productPosition) parts.push(`商品位置：${parameters.productPosition}`);
 		if (parameters.productScale) parts.push(`商品相对大小：${parameters.productScale}%`);
 		if (parameters.lightingMatch) parts.push('匹配场景光线与商品阴影');

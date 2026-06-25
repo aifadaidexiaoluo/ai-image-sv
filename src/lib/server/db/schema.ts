@@ -252,6 +252,27 @@ export const templates = pgTable(
 	(table) => [uniqueIndex('templates_slug_idx').on(table.slug)]
 );
 
+export const userSceneTemplates = pgTable(
+	'user_scene_templates',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		category: text('category').notNull(),
+		assetId: uuid('asset_id')
+			.notNull()
+			.references(() => assets.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [
+		index('user_scene_templates_user_created_idx').on(table.userId, table.createdAt),
+		index('user_scene_templates_user_category_idx').on(table.userId, table.category)
+	]
+);
+
 export const creditWallets = pgTable('credit_wallets', {
 	userId: text('user_id')
 		.primaryKey()
