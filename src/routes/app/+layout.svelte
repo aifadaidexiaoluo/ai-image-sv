@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import UserMenu from '$lib/components/account/user-menu.svelte';
 	import {
 		Bell,
 		Coins,
@@ -13,7 +14,6 @@
 		Sparkles,
 		WandSparkles
 	} from '@lucide/svelte';
-	import UserMenu from '$lib/components/account/user-menu.svelte';
 	import type { LayoutData } from './$types';
 	let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 	const navigation = [
@@ -46,13 +46,13 @@
 		>
 		<nav class="mt-8 space-y-3">
 			{#each navigation as item (item.href)}<a
-					href={resolve(item.href)}
+					href={item.href}
 					class={`flex h-12 items-center gap-4 rounded-xl px-4 text-[15px] font-bold transition ${isActive(item.href) ? 'bg-primary/10 text-primary shadow-[0_10px_24px_rgba(91,61,245,0.1)]' : 'text-[#68738d] hover:bg-[#f5f2ff] hover:text-primary'}`}
 					><item.icon class="size-5 stroke-[1.9]" />{item.label}</a
 				>{/each}
 		</nav>
 		<div
-			class="mt-auto rounded-2xl bg-gradient-to-br from-primary/10 to-violet-50 p-4 shadow-[0_16px_36px_rgba(91,61,245,0.08)]"
+			class="mt-auto rounded-2xl bg-linear-to-br from-primary/10 to-violet-50 p-4 shadow-[0_16px_36px_rgba(91,61,245,0.08)]"
 		>
 			<div class="flex items-center gap-2 text-sm font-bold text-primary">
 				<Coins class="size-4" />{data.wallet.balance} 可用积分
@@ -67,7 +67,7 @@
 	</aside>
 	<div class="min-w-0">
 		<header
-			class="sticky top-0 z-40 flex h-[78px] items-center justify-end bg-white/45 px-10 backdrop-blur-xl"
+			class="sticky top-0 z-40 flex h-16 items-center justify-end bg-white/45 px-10 backdrop-blur-xl"
 		>
 			<div class="ml-auto flex items-center gap-4">
 				<a
