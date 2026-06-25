@@ -1,21 +1,21 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
 	import { sceneTemplates } from '$lib/app-catalog';
 	import ResultEmpty from '$lib/components/app/create-product/result-empty.svelte';
+	import type { ProductPosition } from '$lib/components/app/create-scene/position-grid.svelte';
 	import SceneSidePanel from '$lib/components/app/create-scene/scene-side-panel.svelte';
 	import SceneStepper from '$lib/components/app/create-scene/scene-stepper.svelte';
 	import SceneTemplatePicker, {
 		type SceneCategoryId,
 		type UserSceneTemplate
 	} from '$lib/components/app/create-scene/scene-template-picker.svelte';
-	import type { ProductPosition } from '$lib/components/app/create-scene/position-grid.svelte';
 	import JobCard from '$lib/components/app/job-card.svelte';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import type { GenerationJob } from '$lib/types/jobs';
 	import { CircleAlert, Coins, WandSparkles } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
-	import type { GenerationJob } from '$lib/types/jobs';
+	import { onDestroy } from 'svelte';
 	import type { PageData } from './$types';
 
 	type SceneFormValues = {
