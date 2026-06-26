@@ -71,14 +71,22 @@
 
 	$effect(() => {
 		const ids = data.jobs.map((job) => job?.id).filter(Boolean);
-		if (!ids.includes(selectedId)) {
-			selectedId = ids[0] ?? '';
-			selectedOutputIndex = 0;
+		const currentSelectedId = untrack(() => selectedId);
+		if (!ids.includes(currentSelectedId)) {
+			const nextSelectedId = ids[0] ?? '';
+			if (currentSelectedId !== nextSelectedId) selectedId = nextSelectedId;
+			if (untrack(() => selectedOutputIndex) !== 0) selectedOutputIndex = 0;
 		}
 	});
 
 	$effect(() => {
-		if (selectedOutputIndex >= selectedOutputs.length) selectedOutputIndex = 0;
+		const currentOutputIndex = untrack(() => selectedOutputIndex);
+		if (
+			(selectedOutputs.length === 0 && currentOutputIndex !== 0) ||
+			(selectedOutputs.length > 0 && currentOutputIndex >= selectedOutputs.length)
+		) {
+			selectedOutputIndex = 0;
+		}
 	});
 
 	$effect(() => {

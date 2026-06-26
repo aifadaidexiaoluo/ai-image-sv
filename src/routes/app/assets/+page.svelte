@@ -93,7 +93,16 @@
 		filterFavorite = data.filters.favorite;
 		filterSort = data.filters.sort;
 		filterPageSize = String(data.pageSize);
-		selectedIds = selectedIds.filter((id) => data.items.some((asset) => asset.id === id));
+
+		const visibleIds = new Set(data.items.map((asset) => asset.id));
+		const currentSelectedIds = untrack(() => selectedIds);
+		const nextSelectedIds = currentSelectedIds.filter((id) => visibleIds.has(id));
+		if (
+			nextSelectedIds.length !== currentSelectedIds.length ||
+			nextSelectedIds.some((id, index) => id !== currentSelectedIds[index])
+		) {
+			selectedIds = nextSelectedIds;
+		}
 	});
 
 	function searchFor(params: Record<string, string | number | boolean | undefined>) {
