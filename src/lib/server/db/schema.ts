@@ -155,16 +155,39 @@ export const assets = pgTable(
 		kind: assetKind('kind').notNull(),
 		objectKey: text('object_key').notNull(),
 		fileName: text('file_name').notNull(),
+		displayName: text('display_name').notNull(),
 		mimeType: text('mime_type').notNull(),
 		sizeBytes: integer('size_bytes').notNull(),
 		width: integer('width'),
 		height: integer('height'),
+		style: text('style'),
+		color: text('color'),
 		favorite: boolean('favorite').notNull().default(false),
 		expiresAt: timestamp('expires_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 		deletedAt: timestamp('deleted_at', { withTimezone: true })
 	},
 	(table) => [index('assets_user_created_idx').on(table.userId, table.createdAt)]
+);
+
+export const assetTags = pgTable(
+	'asset_tags',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		assetId: uuid('asset_id')
+			.notNull()
+			.references(() => assets.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		tag: text('tag').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [
+		index('asset_tags_asset_idx').on(table.assetId),
+		index('asset_tags_user_tag_idx').on(table.userId, table.tag)
+	]
 );
 
 export const generationJobs = pgTable(

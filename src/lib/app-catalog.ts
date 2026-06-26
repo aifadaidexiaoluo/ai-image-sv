@@ -281,6 +281,28 @@ export const assetTypeLabels: Record<string, string> = {
 	template: '模板素材'
 };
 
+export const assetStyleOptions = [
+	{ value: 'minimal', label: '简约' },
+	{ value: 'natural', label: '自然' },
+	{ value: 'tech', label: '科技' },
+	{ value: 'commerce', label: '电商' },
+	{ value: 'festival', label: '节日' },
+	{ value: 'premium', label: '高级感' },
+	{ value: 'chinese', label: '国风' },
+	{ value: '3d', label: '3D' }
+] as const;
+
+export const assetColorOptions = [
+	{ value: '#ef4444', label: '红色' },
+	{ value: '#f97316', label: '橙色' },
+	{ value: '#facc15', label: '黄色' },
+	{ value: '#22c55e', label: '绿色' },
+	{ value: '#3b82f6', label: '蓝色' },
+	{ value: '#8b5cf6', label: '紫色' },
+	{ value: '#111827', label: '深色' },
+	{ value: '#e5e7eb', label: '浅色' }
+] as const;
+
 export const colorSwatches = [
 	'#ef4444',
 	'#f97316',

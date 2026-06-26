@@ -1,205 +1,304 @@
 <script lang="ts">
-	import { Download, Heart, MoreHorizontal, Search, SlidersHorizontal, Star } from '@lucide/svelte';
-	import { enhance } from '$app/forms';
-	import { assetShowcase, assetTypeLabels, colorSwatches } from '$lib/app-catalog';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { assetColorOptions, assetStyleOptions } from '$lib/app-catalog';
+	import AssetBulkActions from '$lib/components/app/assets/asset-bulk-actions.svelte';
+	import AssetDeleteDialogs from '$lib/components/app/assets/asset-delete-dialogs.svelte';
+	import AssetEditDialog from '$lib/components/app/assets/asset-edit-dialog.svelte';
+	import AssetFilterPanel from '$lib/components/app/assets/asset-filter-panel.svelte';
+	import AssetGrid from '$lib/components/app/assets/asset-grid.svelte';
+	import AssetPreviewDialog from '$lib/components/app/assets/asset-preview-dialog.svelte';
+	import AssetToolbar from '$lib/components/app/assets/asset-toolbar.svelte';
+	import AssetUploadDialog from '$lib/components/app/assets/asset-upload-dialog.svelte';
+	import type { AssetItem, AssetOption } from '$lib/components/app/assets/types';
+	import { Button } from '$lib/components/ui/button';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import * as Pagination from '$lib/components/ui/pagination';
+	import { untrack } from 'svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
+
 	let { data }: { data: PageData } = $props();
-	let activeType = $state('all');
-	let keyword = $state('');
-	const categoryCounts = $derived({
-		all: data.assets.length,
-		source: data.assets.filter((asset) => asset.kind === 'source').length,
-		output: data.assets.filter((asset) => asset.kind === 'output').length,
-		template: data.assets.filter((asset) => asset.kind === 'template').length,
-		thumbnail: data.assets.filter((asset) => asset.kind === 'thumbnail').length
-	});
-	const filteredAssets = $derived(
-		data.assets.filter((asset) => {
-			const matchesType = activeType === 'all' || asset.kind === activeType;
-			const matchesKeyword =
-				!keyword || asset.fileName.toLowerCase().includes(keyword.toLowerCase());
-			return matchesType && matchesKeyword;
-		})
-	);
-	const displayAssets = $derived(filteredAssets.length ? filteredAssets : []);
-	const tabs = [
-		['all', '全部素材'],
-		['source', '产品素材'],
-		['output', '场景背景'],
-		['template', '装饰元素'],
-		['thumbnail', '贴纸图标'],
-		['texture', '背景纹理'],
-		['font', '字体素材']
+
+	const formatOptions: AssetOption[] = [
+		{ value: 'all', label: '全部格式' },
+		{ value: 'png', label: 'PNG' },
+		{ value: 'jpg', label: 'JPG' },
+		{ value: 'webp', label: 'WEBP' }
 	];
-	const tags = ['简约', '自然', '科技', '电商', '节日', '促销', '高级感', '国风', '3D'];
+	const ratioOptions: AssetOption[] = [
+		{ value: 'all', label: '全部比例' },
+		{ value: 'square', label: '方图' },
+		{ value: 'portrait', label: '竖图' },
+		{ value: 'landscape', label: '横图' },
+		{ value: 'unknown', label: '未知比例' }
+	];
+	const sortOptions: AssetOption[] = [
+		{ value: 'latest', label: '按最新' },
+		{ value: 'oldest', label: '按最早' },
+		{ value: 'name', label: '按名称' }
+	];
+	const filterStyleOptions: AssetOption[] = [
+		{ value: 'all', label: '全部风格' },
+		...assetStyleOptions
+	];
+	const filterColorOptions: AssetOption[] = [
+		{ value: 'all', label: '全部颜色' },
+		...assetColorOptions
+	];
+	const formStyleOptions: AssetOption[] = [{ value: 'all', label: '未设置' }, ...assetStyleOptions];
+	const formColorOptions: AssetOption[] = [{ value: 'all', label: '未设置' }, ...assetColorOptions];
+	const pageSizeOptions: AssetOption[] = [12, 24, 48].map((value) => ({
+		value: String(value),
+		label: `${value} 条/页`
+	}));
+
+	let keyword = $state(untrack(() => data.filters.keyword));
+	let filterFormat = $state(untrack(() => data.filters.format));
+	let filterRatio = $state(untrack(() => data.filters.ratio));
+	let filterStyle = $state(untrack(() => data.filters.style));
+	let filterColor = $state(untrack(() => data.filters.color));
+	let filterFavorite = $state(untrack(() => data.filters.favorite));
+	let filterSort = $state(untrack(() => data.filters.sort));
+	let filterPageSize = $state(untrack(() => String(data.pageSize)));
+	let selectedIds = $state<string[]>([]);
+	let previewAsset = $state<AssetItem>();
+	let editingAsset = $state<AssetItem>();
+	let deleteTarget = $state<AssetItem>();
+	let bulkDeleteOpen = $state(false);
+	let uploadOpen = $state(false);
+
+	const allVisibleSelected = $derived(
+		data.items.length > 0 && data.items.every((asset) => selectedIds.includes(asset.id))
+	);
+	const hasFilters = $derived(
+		Boolean(data.filters.keyword) ||
+			data.filters.kind !== 'all' ||
+			data.filters.favorite ||
+			data.filters.format !== 'all' ||
+			data.filters.ratio !== 'all' ||
+			data.filters.style !== 'all' ||
+			data.filters.color !== 'all' ||
+			Boolean(data.filters.tag) ||
+			data.filters.sort !== 'latest' ||
+			data.pageSize !== 12
+	);
+
+	$effect(() => {
+		keyword = data.filters.keyword;
+		filterFormat = data.filters.format;
+		filterRatio = data.filters.ratio;
+		filterStyle = data.filters.style;
+		filterColor = data.filters.color;
+		filterFavorite = data.filters.favorite;
+		filterSort = data.filters.sort;
+		filterPageSize = String(data.pageSize);
+		selectedIds = selectedIds.filter((id) => data.items.some((asset) => asset.id === id));
+	});
+
+	function searchFor(params: Record<string, string | number | boolean | undefined>) {
+		const search = new SvelteURLSearchParams();
+		if (data.filters.kind !== 'all') search.set('kind', data.filters.kind);
+		if (data.filters.keyword) search.set('keyword', data.filters.keyword);
+		if (data.filters.favorite) search.set('favorite', 'true');
+		if (data.filters.format !== 'all') search.set('format', data.filters.format);
+		if (data.filters.ratio !== 'all') search.set('ratio', data.filters.ratio);
+		if (data.filters.style !== 'all') search.set('style', data.filters.style);
+		if (data.filters.color !== 'all') search.set('color', data.filters.color);
+		if (data.filters.tag) search.set('tag', data.filters.tag);
+		if (data.filters.sort !== 'latest') search.set('sort', data.filters.sort);
+		if (data.pageSize !== 12) search.set('pageSize', String(data.pageSize));
+		if (data.page > 1) search.set('page', String(data.page));
+
+		for (const [key, value] of Object.entries(params)) {
+			if (
+				value === undefined ||
+				value === '' ||
+				value === false ||
+				value === 'all' ||
+				(key === 'page' && Number(value) <= 1) ||
+				(key === 'pageSize' && Number(value) === 12) ||
+				(key === 'sort' && value === 'latest')
+			) {
+				search.delete(key);
+			} else {
+				search.set(key, String(value));
+			}
+		}
+
+		const text = search.toString();
+		return text ? `?${text}` : '';
+	}
+
+	function assetsHref(params: Record<string, string | number | boolean | undefined>) {
+		return `/app/assets${searchFor(params)}`;
+	}
+
+	function applyFilters() {
+		const href = assetsHref({
+			keyword: keyword.trim(),
+			format: filterFormat,
+			ratio: filterRatio,
+			style: filterStyle,
+			color: filterColor,
+			favorite: filterFavorite,
+			sort: filterSort,
+			pageSize: Number(filterPageSize),
+			page: 1
+		});
+		void goto(resolve(href as '/app/assets'));
+	}
+
+	function styleLabel(value: string | null) {
+		return assetStyleOptions.find((item) => item.value === value)?.label ?? '未设置';
+	}
+
+	function colorLabel(value: string | null) {
+		return assetColorOptions.find((item) => item.value === value)?.label ?? '未设置';
+	}
+
+	function sizeLabel(asset: AssetItem) {
+		if (asset.width && asset.height) return `${asset.width} x ${asset.height}`;
+		return `${Math.max(1, Math.round(asset.sizeBytes / 1024))} KB`;
+	}
+
+	function selectAllVisible(checked: boolean) {
+		const visibleIds = data.items.map((asset) => asset.id);
+		selectedIds = checked
+			? Array.from(new Set([...selectedIds, ...visibleIds]))
+			: selectedIds.filter((id) => !visibleIds.includes(id));
+	}
+
+	function toggleSelected(id: string, checked: boolean) {
+		selectedIds = checked
+			? Array.from(new Set([...selectedIds, id]))
+			: selectedIds.filter((item) => item !== id);
+	}
+
+	function openEdit(asset: AssetItem) {
+		previewAsset = undefined;
+		editingAsset = asset;
+	}
 </script>
 
 <svelte:head><title>素材库 - DesignAI</title></svelte:head>
-<div class="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-	<div>
-		<h1 class="text-3xl font-black text-[#121826]">素材库</h1>
-		<p class="mt-2 text-sm text-[#65708a]">海量优质素材，满足各类商用设计需求</p>
-	</div>
-	<div class="flex flex-wrap gap-3">
-		<label
-			class="flex h-11 w-80 items-center gap-2 rounded-xl border border-[#dde2f2] bg-white px-3 text-sm text-[#8a94ad] shadow-sm"
-		>
-			<Search class="size-4" />
-			<input
-				bind:value={keyword}
-				class="min-w-0 flex-1 bg-transparent outline-none"
-				placeholder="搜索素材关键词"
+
+<AssetToolbar
+	bind:keyword
+	bind:sort={filterSort}
+	{sortOptions}
+	onApply={applyFilters}
+	onUpload={() => (uploadOpen = true)}
+/>
+
+<AssetBulkActions
+	{selectedIds}
+	onClear={() => (selectedIds = [])}
+	onDelete={() => (bulkDeleteOpen = true)}
+/>
+
+<AssetFilterPanel
+	activeKind={data.filters.kind}
+	counts={data.counts}
+	bind:format={filterFormat}
+	bind:ratio={filterRatio}
+	bind:style={filterStyle}
+	bind:color={filterColor}
+	bind:pageSize={filterPageSize}
+	bind:favorite={filterFavorite}
+	{formatOptions}
+	{ratioOptions}
+	styleOptions={filterStyleOptions}
+	colorOptions={filterColorOptions}
+	{pageSizeOptions}
+	availableTags={data.availableTags}
+	selectedTag={data.filters.tag}
+	{hasFilters}
+	{assetsHref}
+	onApply={applyFilters}
+>
+	<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+		<div>
+			<h2 class="text-[17px] font-black text-[#121826]">素材列表</h2>
+			<p class="mt-1 text-sm font-medium text-[#65708a]">共 {data.total} 条素材</p>
+		</div>
+		<label class="flex items-center gap-2 text-sm font-bold text-[#65708a]">
+			<Checkbox
+				checked={allVisibleSelected}
+				onCheckedChange={(checked) => selectAllVisible(Boolean(checked))}
 			/>
+			选择当前页
 		</label>
-		<button
-			class="h-11 rounded-xl border border-[#dde2f2] bg-white px-5 text-sm font-bold text-[#65708a]"
-			>按最新</button
-		>
 	</div>
-</div>
+	<AssetGrid
+		items={data.items}
+		{selectedIds}
+		{hasFilters}
+		{styleLabel}
+		{colorLabel}
+		{sizeLabel}
+		{assetsHref}
+		onSelectChange={toggleSelected}
+		onPreview={(asset) => (previewAsset = asset)}
+		onEdit={openEdit}
+		onDelete={(asset) => (deleteTarget = asset)}
+		onUpload={() => (uploadOpen = true)}
+	/>
 
-<section class="overflow-hidden rounded-2xl border border-[#e1e5f2] bg-white shadow-sm">
-	<div class="flex overflow-x-auto border-b border-[#eef1f7]">
-		{#each tabs as [id, label] (id)}
-			<button
-				onclick={() => (activeType = id)}
-				class={`h-14 shrink-0 border-b-2 px-6 text-sm font-black ${activeType === id ? 'border-primary text-primary' : 'border-transparent text-[#65708a]'}`}
-				>{label}</button
-			>
-		{/each}
-	</div>
-	<div class="flex flex-wrap items-center gap-5 border-b border-[#eef1f7] p-5 text-sm">
-		<label class="font-bold text-[#65708a]"
-			>类型 <select class="ml-3 h-10 rounded-lg border border-[#dde2f2] px-4"
-				><option>全部</option></select
-			></label
-		>
-		<label class="font-bold text-[#65708a]"
-			>风格 <select class="ml-3 h-10 rounded-lg border border-[#dde2f2] px-4"
-				><option>全部</option></select
-			></label
-		>
-		<label class="font-bold text-[#65708a]"
-			>颜色 <select class="ml-3 h-10 rounded-lg border border-[#dde2f2] px-4"
-				><option>全部</option></select
-			></label
-		>
-		<label class="font-bold text-[#65708a]"
-			>比例 <select class="ml-3 h-10 rounded-lg border border-[#dde2f2] px-4"
-				><option>全部</option></select
-			></label
-		>
-		<div class="flex items-center gap-2">
-			<span class="font-bold text-[#65708a]">颜色</span>
-			{#each colorSwatches as color (color)}<span
-					class="size-4 rounded-full ring-1 ring-black/5"
-					style:background={color}
-				></span>{/each}
-		</div>
-		<button
-			class="ml-auto inline-flex h-10 items-center gap-2 rounded-lg border border-[#dde2f2] px-4 font-bold text-[#65708a]"
-			><SlidersHorizontal class="size-4" />更多筛选</button
-		>
-		<button class="h-10 rounded-lg border border-[#dde2f2] px-4 font-bold text-[#65708a]"
-			>重置</button
-		>
-	</div>
-
-	<div class="grid gap-0 lg:grid-cols-[210px_1fr]">
-		<aside class="border-r border-[#eef1f7] p-5">
-			<h2 class="font-black text-[#121826]">素材分类</h2>
-			<div class="mt-4 space-y-2">
-				{#each Object.entries(assetTypeLabels) as [id, label] (id)}
-					<button
-						onclick={() => (activeType = id)}
-						class={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-bold ${activeType === id ? 'bg-primary/10 text-primary' : 'text-[#65708a]'}`}
+	{#if data.totalPages > 1}
+		<Pagination.Root count={data.total} perPage={data.pageSize} page={data.page} class="mt-5">
+			<Pagination.Content class="justify-center">
+				<Pagination.Item>
+					<Button
+						href={assetsHref({ page: data.page - 1 })}
+						variant="outline"
+						disabled={data.page <= 1}
 					>
-						<span>{label}</span><span>{categoryCounts[id as keyof typeof categoryCounts] ?? 0}</span
+						上一页
+					</Button>
+				</Pagination.Item>
+				{#each Array.from({ length: data.totalPages }, (_, index) => index + 1).slice(0, 7) as page (page)}
+					<Pagination.Item>
+						<Button
+							href={assetsHref({ page })}
+							variant={page === data.page ? 'default' : 'outline'}
+							size="icon"
 						>
-					</button>
+							{page}
+						</Button>
+					</Pagination.Item>
 				{/each}
-			</div>
-			<h2 class="mt-8 font-black text-[#121826]">热门标签</h2>
-			<div class="mt-4 flex flex-wrap gap-2">
-				{#each tags as tag (tag)}<span
-						class="rounded-lg bg-[#f3f5fb] px-3 py-1.5 text-xs font-bold text-[#65708a]">{tag}</span
-					>{/each}
-			</div>
-		</aside>
+				<Pagination.Item>
+					<Button
+						href={assetsHref({ page: data.page + 1 })}
+						variant="outline"
+						disabled={data.page >= data.totalPages}
+					>
+						下一页
+					</Button>
+				</Pagination.Item>
+			</Pagination.Content>
+		</Pagination.Root>
+	{/if}
+</AssetFilterPanel>
 
-		<div class="p-5">
-			<div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-				{#if displayAssets.length}
-					{#each displayAssets as asset (asset.id)}
-						<article
-							class="group overflow-hidden rounded-xl border border-[#e1e5f2] bg-white shadow-sm"
-						>
-							<div class="relative aspect-square bg-[#f7f8fc]">
-								<img src={asset.url} alt={asset.fileName} class="size-full object-cover" />
-								<form method="POST" action="?/toggleFavorite" use:enhance>
-									<input type="hidden" name="id" value={asset.id} />
-									<button
-										class="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-white/90 text-[#65708a] shadow"
-										><Star
-											class={`size-4 ${asset.favorite ? 'fill-primary text-primary' : ''}`}
-										/></button
-									>
-								</form>
-								<!-- eslint-disable svelte/no-navigation-without-resolve -->
-								<a
-									href={asset.url}
-									target="_blank"
-									class="absolute right-3 bottom-3 grid size-9 place-items-center rounded-full bg-white/90 text-primary opacity-0 shadow transition group-hover:opacity-100"
-									><Download class="size-4" /></a
-								>
-								<!-- eslint-enable svelte/no-navigation-without-resolve -->
-								<span
-									class="absolute bottom-3 left-3 rounded-md bg-white/80 px-2 py-1 text-xs font-bold text-[#8a94ad]"
-									>{asset.mimeType.includes('png') ? 'PNG' : 'JPG'}</span
-								>
-							</div>
-							<div class="p-3">
-								<p class="truncate text-sm font-black text-[#121826]">{asset.fileName}</p>
-								<p class="mt-1 text-xs font-medium text-[#65708a]">
-									{asset.mimeType.split('/')[1]?.toUpperCase()} · {asset.width && asset.height
-										? `${asset.width} x ${asset.height}`
-										: `${Math.round(asset.sizeBytes / 1024)} KB`}
-								</p>
-							</div>
-						</article>
-					{/each}
-				{:else}
-					{#each assetShowcase as asset (asset.name)}
-						<article
-							class="group overflow-hidden rounded-xl border border-[#e1e5f2] bg-white opacity-80 shadow-sm"
-						>
-							<div class="relative aspect-square bg-[#f7f8fc]">
-								<img src={asset.image} alt="" class="size-full object-cover" />
-								<Heart
-									class="absolute top-3 right-3 size-8 rounded-full bg-white/90 p-2 text-[#65708a] shadow"
-								/>
-								<span
-									class="absolute bottom-3 left-3 rounded-md bg-white/80 px-2 py-1 text-xs font-bold text-[#8a94ad]"
-									>{asset.kind}</span
-								>
-							</div>
-							<div class="p-3">
-								<p class="truncate text-sm font-black text-[#121826]">{asset.name}</p>
-								<p class="mt-1 text-xs font-medium text-[#65708a]">{asset.kind} · {asset.size}</p>
-							</div>
-						</article>
-					{/each}
-				{/if}
-			</div>
-			<div class="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-[#65708a]">
-				<span>共 {data.assets.length || assetShowcase.length} 条</span>
-				<button class="rounded-lg border border-[#dde2f2] px-3 py-2">1</button>
-				<button class="rounded-lg border border-[#dde2f2] px-3 py-2">2</button>
-				<button class="rounded-lg border border-[#dde2f2] px-3 py-2">3</button>
-				<button class="rounded-lg border border-[#dde2f2] px-3 py-2"
-					><MoreHorizontal class="size-4" /></button
-				>
-			</div>
-		</div>
-	</div>
-</section>
+<AssetUploadDialog
+	bind:open={uploadOpen}
+	styleOptions={formStyleOptions}
+	colorOptions={formColorOptions}
+	onUploaded={invalidateAll}
+/>
+<AssetPreviewDialog
+	bind:asset={previewAsset}
+	{styleLabel}
+	{colorLabel}
+	{sizeLabel}
+	onEdit={openEdit}
+/>
+<AssetEditDialog
+	bind:asset={editingAsset}
+	styleOptions={formStyleOptions}
+	colorOptions={formColorOptions}
+	onSaved={invalidateAll}
+/>
+<AssetDeleteDialogs bind:deleteTarget bind:bulkOpen={bulkDeleteOpen} {selectedIds} />

@@ -79,6 +79,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const assetId = crypto.randomUUID();
 	const objectKey = `users/${locals.user.id}/scene-templates/${assetId}.${extension}`;
 	const title = input.title!.trim();
+	const fileName = input.fileName!.slice(0, 180);
 
 	const row = await db.transaction(async (tx) => {
 		const [asset] = await tx
@@ -88,7 +89,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				userId: locals.user!.id,
 				kind: 'template',
 				objectKey,
-				fileName: input.fileName!.slice(0, 180),
+				fileName,
+				displayName: title,
 				mimeType: contentType,
 				sizeBytes: input.size!
 			})

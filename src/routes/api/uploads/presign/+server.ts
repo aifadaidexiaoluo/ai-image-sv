@@ -23,6 +23,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const extension = input.contentType === 'image/jpeg' ? 'jpg' : input.contentType.split('/')[1];
 	const id = crypto.randomUUID();
 	const objectKey = `users/${locals.user.id}/sources/${id}.${extension}`;
+	const fileName = input.fileName.slice(0, 180);
 	const [asset] = await db
 		.insert(assets)
 		.values({
@@ -30,7 +31,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			userId: locals.user.id,
 			kind: 'source',
 			objectKey,
-			fileName: input.fileName.slice(0, 180),
+			fileName,
+			displayName: fileName,
 			mimeType: input.contentType,
 			sizeBytes: input.size,
 			expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)

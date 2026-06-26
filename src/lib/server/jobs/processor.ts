@@ -42,6 +42,7 @@ async function saveOutput(
 			kind: 'output',
 			objectKey,
 			fileName: `${job.tool}-${position + 1}.${extension}`,
+			displayName: `${job.tool}-${position + 1}.${extension}`,
 			mimeType: output.mimeType,
 			sizeBytes: output.bytes.byteLength
 		})
