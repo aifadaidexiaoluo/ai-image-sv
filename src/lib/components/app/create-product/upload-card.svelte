@@ -62,7 +62,11 @@
 			上传参考图 <span class="text-[14px] font-semibold text-[#65708a]">（可选）</span>
 			<Tooltip.Root>
 				<Tooltip.Trigger>
-					<CircleHelp class="size-4 text-[#8b95aa]" />
+					{#snippet child({ props })}
+						<button {...props} type="button" aria-label="参考图说明">
+							<CircleHelp class="size-4 text-[#8b95aa]" />
+						</button>
+					{/snippet}
 				</Tooltip.Trigger>
 				<Tooltip.Content>参考图生成模式下必填，描述生成模式下可作为额外参考。</Tooltip.Content>
 			</Tooltip.Root>

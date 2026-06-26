@@ -56,12 +56,16 @@
 			<Tooltip.Provider>
 				<Tooltip.Root>
 					<Tooltip.Trigger>
-						<button
-							class="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-white/90 text-[#65708a] shadow"
-							aria-label={asset.favorite ? '取消收藏' : '收藏素材'}
-						>
-							<Star class={cn('size-4', asset.favorite && 'fill-primary text-primary')} />
-						</button>
+						{#snippet child({ props })}
+							<button
+								{...props}
+								type="submit"
+								class="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-white/90 text-[#65708a] shadow"
+								aria-label={asset.favorite ? '取消收藏' : '收藏素材'}
+							>
+								<Star class={cn('size-4', asset.favorite && 'fill-primary text-primary')} />
+							</button>
+						{/snippet}
 					</Tooltip.Trigger>
 					<Tooltip.Content>{asset.favorite ? '取消收藏' : '收藏素材'}</Tooltip.Content>
 				</Tooltip.Root>
@@ -72,13 +76,17 @@
 			<Tooltip.Provider>
 				<Tooltip.Root>
 					<Tooltip.Trigger>
-						<button
-							class="grid size-9 place-items-center rounded-full bg-white/90 text-primary shadow"
-							aria-label="预览素材"
-							onclick={() => onPreview(asset)}
-						>
-							<Eye class="size-4" />
-						</button>
+						{#snippet child({ props })}
+							<button
+								{...props}
+								type="button"
+								class="grid size-9 place-items-center rounded-full bg-white/90 text-primary shadow"
+								aria-label="预览素材"
+								onclick={() => onPreview(asset)}
+							>
+								<Eye class="size-4" />
+							</button>
+						{/snippet}
 					</Tooltip.Trigger>
 					<Tooltip.Content>预览</Tooltip.Content>
 				</Tooltip.Root>
@@ -86,17 +94,20 @@
 			<Tooltip.Provider>
 				<Tooltip.Root>
 					<Tooltip.Trigger>
-						<!-- eslint-disable svelte/no-navigation-without-resolve -->
-						<a
-							href={asset.url}
-							target="_blank"
-							rel="noreferrer"
-							class="grid size-9 place-items-center rounded-full bg-white/90 text-primary shadow"
-							aria-label="下载素材"
-						>
-							<Download class="size-4" />
-						</a>
-						<!-- eslint-enable svelte/no-navigation-without-resolve -->
+						{#snippet child({ props })}
+							<!-- eslint-disable svelte/no-navigation-without-resolve -->
+							<a
+								{...props}
+								href={asset.url}
+								target="_blank"
+								rel="noreferrer"
+								class="grid size-9 place-items-center rounded-full bg-white/90 text-primary shadow"
+								aria-label="下载素材"
+							>
+								<Download class="size-4" />
+							</a>
+							<!-- eslint-enable svelte/no-navigation-without-resolve -->
+						{/snippet}
 					</Tooltip.Trigger>
 					<Tooltip.Content>下载</Tooltip.Content>
 				</Tooltip.Root>
