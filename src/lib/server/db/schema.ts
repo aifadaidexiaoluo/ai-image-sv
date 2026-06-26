@@ -85,7 +85,9 @@ export const session = pgTable(
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-		impersonatedBy: text('impersonated_by')
+		impersonatedBy: text('impersonated_by'),
+		activeOrganizationId: text('active_organization_id'),
+		activeTeamId: text('active_team_id')
 	},
 	(table) => [
 		uniqueIndex('session_token_idx').on(table.token),
@@ -146,6 +148,141 @@ export const rateLimit = pgTable(
 	},
 	(table) => [uniqueIndex('rate_limit_key_idx').on(table.key)]
 );
+
+export const organization = pgTable(
+	'organization',
+	{
+		id: text('id').primaryKey(),
+		name: text('name').notNull(),
+		slug: text('slug').notNull(),
+		logo: text('logo'),
+		metadata: text('metadata'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+	},
+	(table) => [uniqueIndex('organization_slug_idx').on(table.slug)]
+);
+
+export const member = pgTable(
+	'member',
+	{
+		id: text('id').primaryKey(),
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		role: text('role').notNull().default('member'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull()
+	},
+	(table) => [
+		index('member_organization_idx').on(table.organizationId),
+		index('member_user_idx').on(table.userId)
+	]
+);
+
+export const invitation = pgTable(
+	'invitation',
+	{
+		id: text('id').primaryKey(),
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		email: text('email').notNull(),
+		role: text('role').notNull(),
+		status: text('status').notNull().default('pending'),
+		expiresAt: timestamp('expires_at', { withTimezone: true }),
+		inviterId: text('inviter_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		teamId: text('team_id'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [
+		index('invitation_organization_idx').on(table.organizationId),
+		index('invitation_email_idx').on(table.email)
+	]
+);
+
+export const team = pgTable(
+	'team',
+	{
+		id: text('id').primaryKey(),
+		name: text('name').notNull(),
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+	},
+	(table) => [index('team_organization_idx').on(table.organizationId)]
+);
+
+export const teamMember = pgTable(
+	'team_member',
+	{
+		id: text('id').primaryKey(),
+		teamId: text('team_id')
+			.notNull()
+			.references(() => team.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true })
+	},
+	(table) => [
+		index('team_member_team_idx').on(table.teamId),
+		index('team_member_user_idx').on(table.userId)
+	]
+);
+
+export const apikey = pgTable(
+	'apikey',
+	{
+		id: text('id').primaryKey(),
+		name: text('name'),
+		start: text('start'),
+		prefix: text('prefix'),
+		key: text('key').notNull(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		refillInterval: integer('refill_interval'),
+		refillAmount: integer('refill_amount'),
+		lastRefillAt: timestamp('last_refill_at', { withTimezone: true }),
+		enabled: boolean('enabled').notNull().default(true),
+		rateLimitEnabled: boolean('rate_limit_enabled').notNull().default(true),
+		rateLimitTimeWindow: integer('rate_limit_time_window'),
+		rateLimitMax: integer('rate_limit_max'),
+		requestCount: integer('request_count').notNull().default(0),
+		remaining: integer('remaining'),
+		lastRequest: timestamp('last_request', { withTimezone: true }),
+		expiresAt: timestamp('expires_at', { withTimezone: true }),
+		permissions: text('permissions'),
+		metadata: text('metadata'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull()
+	},
+	(table) => [index('apikey_key_idx').on(table.key), index('apikey_user_idx').on(table.userId)]
+);
+
+export const userSettings = pgTable('user_settings', {
+	userId: text('user_id')
+		.primaryKey()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	language: text('language').notNull().default('zh-CN'),
+	timezone: text('timezone').notNull().default('Asia/Shanghai'),
+	defaultTool: text('default_tool').notNull().default('product'),
+	defaultImageCount: integer('default_image_count').notNull().default(4),
+	defaultOutputFormat: text('default_output_format').notNull().default('png'),
+	emailProductUpdates: boolean('email_product_updates').notNull().default(true),
+	emailBillingReminders: boolean('email_billing_reminders').notNull().default(true),
+	emailMarketing: boolean('email_marketing').notNull().default(false),
+	inAppJobUpdates: boolean('in_app_job_updates').notNull().default(true),
+	inAppCreditAlerts: boolean('in_app_credit_alerts').notNull().default(true),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
 
 export const assets = pgTable(
 	'assets',

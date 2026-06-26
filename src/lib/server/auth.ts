@@ -3,7 +3,9 @@ import { betterAuth } from 'better-auth/minimal';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { admin } from 'better-auth/plugins/admin';
+import { apiKey } from 'better-auth/plugins';
 import { jwt } from 'better-auth/plugins/jwt';
+import { organization } from 'better-auth/plugins/organization';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import { emailProvider, resetPasswordEmail, verificationEmail } from '$lib/server/email';
@@ -64,6 +66,27 @@ export const auth = betterAuth({
 	advanced: { useSecureCookies: env.NODE_ENV === 'production' },
 	plugins: [
 		admin({ defaultRole: 'user', adminRoles: ['admin'] }),
+		apiKey({
+			defaultPrefix: 'dai',
+			rateLimit: { enabled: true, timeWindow: 60 * 1000, maxRequests: 120 }
+		}),
+		organization({
+			allowUserToCreateOrganization: true,
+			organizationLimit: 5,
+			membershipLimit: 50,
+			invitationExpiresIn: 60 * 60 * 24 * 7,
+			cancelPendingInvitationsOnReInvite: true,
+			teams: { enabled: true },
+			sendInvitationEmail: async ({ email, organization, inviter, invitation }) => {
+				const acceptUrl = `${env.ORIGIN}/app/settings?tab=team&invitationId=${invitation.id}`;
+				await emailProvider.send({
+					to: email,
+					subject: `加入 ${organization.name} - DesignAI`,
+					html: `<p>${inviter.user.name} 邀请你加入 ${organization.name}。</p><p><a href="${acceptUrl}">查看邀请</a></p>`,
+					text: `${inviter.user.name} 邀请你加入 ${organization.name}。查看邀请：${acceptUrl}`
+				});
+			}
+		}),
 		jwt(),
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
 	]
