@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { ChevronDown, Coins, Crown, Gift, Menu, X } from '@lucide/svelte';
-	import * as m from '$lib/paraglide/messages';
 	import UserMenu from '$lib/components/account/user-menu.svelte';
+	import * as m from '$lib/paraglide/messages';
 	import type { AccountSummary } from '$lib/types/account';
+	import { ChevronDown, Coins, Crown, Gift, Menu, X } from '@lucide/svelte';
 	import BrandLogo from './brand-logo.svelte';
 	import { navItems } from './home-content';
 
@@ -27,7 +27,7 @@
 
 <svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
 
-<header class="relative z-50 h-[76px] border-b border-white/70 bg-white/75 backdrop-blur-xl">
+<header class="relative z-50 h-19 border-b border-white/70 bg-white/75 backdrop-blur-xl">
 	<div class="home-container flex h-full items-center justify-between">
 		<BrandLogo />
 
@@ -51,7 +51,7 @@
 						</button>
 						{#if openMenu === item.label}
 							<div
-								class="absolute top-[61px] left-1/2 w-48 -translate-x-1/2 rounded-2xl border border-[#ebe8f8] bg-white p-2 shadow-[0_18px_50px_rgba(42,30,104,0.14)]"
+								class="absolute top-15.25 left-1/2 w-48 -translate-x-1/2 rounded-2xl border border-[#ebe8f8] bg-white p-2 shadow-[0_18px_50px_rgba(42,30,104,0.14)]"
 							>
 								{#each item.children as child (child.label)}
 									<a

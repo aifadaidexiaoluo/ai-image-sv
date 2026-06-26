@@ -1,15 +1,19 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import HomeFooter from '$lib/components/home/home-footer.svelte';
 	import HomeHeader from '$lib/components/home/home-header.svelte';
+	import type { AccountSummary } from '$lib/types/account';
+
 	let { eyebrow, title, description, children } = $props<{
 		eyebrow: string;
 		title: string;
 		description: string;
 		children: import('svelte').Snippet;
 	}>();
+	let account = $derived((page.data as { account?: AccountSummary | null }).account ?? null);
 </script>
 
-<HomeHeader />
+<HomeHeader {account} />
 <main class="min-h-[70vh] bg-[#f8f7ff]">
 	<section class="border-b bg-white py-16 sm:py-24">
 		<div class="home-container text-center">
