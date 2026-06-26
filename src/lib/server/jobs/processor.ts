@@ -10,6 +10,16 @@ import { buildGenerationPrompt } from './prompt';
 
 type Job = typeof generationJobs.$inferSelect;
 
+function formatJobError(error: unknown) {
+	if (!(error instanceof Error)) return { message: 'UNKNOWN_ERROR', raw: error };
+	return {
+		name: error.name,
+		message: error.message,
+		stack: error.stack,
+		cause: error.cause
+	};
+}
+
 async function loadSource(job: Job) {
 	if (!job.sourceAssetId) return undefined;
 	const asset = await db.query.assets.findFirst({ where: eq(assets.id, job.sourceAssetId) });
@@ -171,6 +181,17 @@ export async function processJob(job: Job) {
 		});
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'UNKNOWN_ERROR';
+		console.error('[jobs:processor] Job processing failed', {
+			jobId: job.id,
+			userId: job.userId,
+			tool: job.tool,
+			provider: job.provider,
+			stage: job.stage,
+			completedCount: completed,
+			totalCount: job.totalCount,
+			retryCount: job.retryCount,
+			error: formatJobError(error)
+		});
 		const consumedCredits = completed * creditsPerOutput(job.tool);
 		const cycleConsumedCredits = (completed - initiallyCompleted) * creditsPerOutput(job.tool);
 		await settleCredits(

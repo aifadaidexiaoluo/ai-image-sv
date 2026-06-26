@@ -1,4 +1,5 @@
 import type { GeneratedImage, GenerationRequest, ImageGenerationProvider } from './types';
+import { createProviderResponseError } from './errors';
 
 export class OpenAIImageProvider implements ImageGenerationProvider {
 	id = 'openai' as const;
@@ -45,7 +46,7 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
 				})
 			});
 		}
-		if (!response.ok) throw new Error(`OPENAI_${response.status}`);
+		if (!response.ok) throw await createProviderResponseError('OPENAI', response);
 		const payload = (await response.json()) as {
 			data?: Array<{ b64_json?: string; url?: string }>;
 		};

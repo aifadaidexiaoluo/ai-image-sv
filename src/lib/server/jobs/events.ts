@@ -14,6 +14,17 @@ export interface JobEventPayload {
 }
 
 export async function publishJobEvent(jobId: string, type: string, payload: JobEventPayload) {
+	if (type === 'job.failed') {
+		console.error('[jobs:event] Job failed event published', {
+			jobId,
+			status: payload.status,
+			stage: payload.stage,
+			completedCount: payload.completedCount,
+			totalCount: payload.totalCount,
+			message: payload.message,
+			error: payload.error
+		});
+	}
 	const [event] = await db
 		.insert(jobEvents)
 		.values({ jobId, type, payload: { ...payload } })

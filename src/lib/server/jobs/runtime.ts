@@ -9,9 +9,11 @@ import {
 interface GenerationQueueRuntime {
 	worker?: Worker<GenerationQueueData>;
 	started: boolean;
+	version?: string;
 }
 
 const runtimeKey = '__designaiGenerationQueueRuntime';
+const runtimeVersion = import.meta.env.DEV ? `dev:${Date.now()}` : 'production';
 const globalRuntime = globalThis as typeof globalThis & {
 	__designaiGenerationQueueRuntime?: GenerationQueueRuntime;
 };
@@ -23,7 +25,15 @@ function getRuntime() {
 
 export function startGenerationQueueRuntime() {
 	const runtime = getRuntime();
-	if (runtime.started) return runtime.worker;
+	if (runtime.started && runtime.version === runtimeVersion) return runtime.worker;
+	if (runtime.started && runtime.worker) {
+		console.info('[jobs:queue] Restarting BullMQ generation worker for updated runtime');
+		void runtime.worker.close().catch((error) => {
+			console.error('[jobs:queue] Failed to close previous worker', error);
+		});
+		runtime.started = false;
+		runtime.worker = undefined;
+	}
 
 	const concurrency = Math.max(1, Number(process.env.JOB_QUEUE_CONCURRENCY ?? 1));
 	const worker = new Worker<GenerationQueueData>(
@@ -53,6 +63,7 @@ export function startGenerationQueueRuntime() {
 
 	runtime.worker = worker;
 	runtime.started = true;
+	runtime.version = runtimeVersion;
 	console.info('[jobs:queue] BullMQ generation worker started');
 	return worker;
 }

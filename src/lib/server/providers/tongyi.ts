@@ -1,4 +1,5 @@
 import type { GeneratedImage, GenerationRequest, ImageGenerationProvider } from './types';
+import { createProviderResponseError } from './errors';
 
 export class TongyiImageProvider implements ImageGenerationProvider {
 	id = 'tongyi' as const;
@@ -22,7 +23,7 @@ export class TongyiImageProvider implements ImageGenerationProvider {
 				})
 			}
 		);
-		if (!response.ok) throw new Error(`TONGYI_${response.status}`);
+		if (!response.ok) throw await createProviderResponseError('TONGYI', response);
 		const payload = (await response.json()) as {
 			output?: { results?: Array<{ url: string }> };
 		};

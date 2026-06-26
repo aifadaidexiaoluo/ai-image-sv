@@ -1,4 +1,5 @@
 import type { BackgroundRemovalProvider } from './types';
+import { createProviderResponseError } from './errors';
 
 export class RemoveBgProvider implements BackgroundRemovalProvider {
 	id = 'remove-bg';
@@ -14,12 +15,13 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
 			},
 			body: JSON.stringify({ image_base64: imageBase64 })
 		});
-		if (!response.ok) throw new Error(`REMOVE_BG_${response.status}`);
+		if (!response.ok) throw await createProviderResponseError('REMOVE_BG', response);
 		const result = (await response.json()) as { success?: boolean; image_url?: string };
 		if (!result.success || !result.image_url) throw new Error('REMOVE_BG_FAILED');
 
 		const imageResponse = await fetch(result.image_url);
-		if (!imageResponse.ok) throw new Error(`REMOVE_BG_IMAGE_${imageResponse.status}`);
+		if (!imageResponse.ok)
+			throw await createProviderResponseError('REMOVE_BG_IMAGE', imageResponse);
 
 		return {
 			bytes: new Uint8Array(await imageResponse.arrayBuffer()),
