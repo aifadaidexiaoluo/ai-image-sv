@@ -19,6 +19,5 @@ export function getImageProvider(id: GenerationProviderId): ImageGenerationProvi
 	return mock;
 }
 
-export const backgroundRemovalProvider = process.env.REMOVE_BG_API_KEY
-	? new RemoveBgProvider()
-	: new MockBackgroundRemovalProvider();
+export const backgroundRemovalProvider =
+	process.env.MOCK_AI === 'true' ? new MockBackgroundRemovalProvider() : new RemoveBgProvider();

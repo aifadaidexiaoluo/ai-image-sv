@@ -52,7 +52,7 @@ export async function enqueueGenerationJob(jobId: string, retryCount: number) {
 		'generation',
 		{ jobId },
 		{
-			jobId: `${jobId}:${retryCount}`
+			jobId: `${jobId}-${retryCount}`
 		}
 	);
 }
