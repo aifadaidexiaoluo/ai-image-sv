@@ -575,7 +575,7 @@
 					class="mx-auto max-h-[70vh] rounded-xl object-contain"
 				/>
 			{:else if selected && !jobTerminal(selected)}
-				<Skeleton class="mx-auto h-[60vh] max-h-[620px] w-full max-w-3xl rounded-xl" />
+				<Skeleton class="mx-auto h-[60vh] max-h-155 w-full max-w-3xl rounded-xl" />
 			{:else}
 				<div class="grid min-h-72 place-items-center text-sm text-[#65708a]">无可用结果</div>
 			{/if}

@@ -1,11 +1,12 @@
 import { and, asc, count, desc, eq, ilike, inArray, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { assets, generationJobs, generationOutputs, jobEvents } from '$lib/server/db/schema';
-import { ensureWallet, reserveCredits } from '$lib/server/credits';
+import { ensureWallet, reserveCredits, settleCredits } from '$lib/server/credits';
 import { publishJobEvent } from './events';
 import { storageProvider } from '$lib/server/storage';
 import type { GenerationProviderId, GenerationTool } from '$lib/server/providers';
 import { creditsPerOutput, reservedCredits as calculateReservedCredits } from '$lib/jobs/policy';
+import { enqueueGenerationJob } from './queue';
 
 export interface CreateJobInput {
 	tool: GenerationTool;
@@ -80,6 +81,13 @@ export async function createJob(userId: string, input: CreateJobInput) {
 		completedCount: 0,
 		totalCount
 	});
+	try {
+		await enqueueGenerationJob(job.id, job.retryCount);
+	} catch (error) {
+		await settleCredits(userId, `${job.id}:0`, reservedCredits, 0);
+		await db.delete(generationJobs).where(eq(generationJobs.id, job.id));
+		throw error;
+	}
 	return job;
 }
 
@@ -149,28 +157,48 @@ export async function retryJob(jobId: string, userId: string, isAdmin = false) {
 	const nextRetryCount = job.retryCount + 1;
 	const remainingCredits = (job.totalCount - job.completedCount) * creditsPerOutput(job.tool);
 	await reserveCredits(job.userId, remainingCredits, `${jobId}:${nextRetryCount}`);
-	const [updated] = await db
-		.update(generationJobs)
-		.set({
+	try {
+		const [updated] = await db
+			.update(generationJobs)
+			.set({
+				status: 'queued',
+				stage: 'queued',
+				progress: 0,
+				errorCode: null,
+				errorMessage: null,
+				reservedCredits: remainingCredits,
+				retryCount: nextRetryCount,
+				finishedAt: null,
+				updatedAt: new Date()
+			})
+			.where(eq(generationJobs.id, jobId))
+			.returning();
+		await publishJobEvent(jobId, 'job.status', {
 			status: 'queued',
 			stage: 'queued',
 			progress: 0,
-			errorCode: null,
-			errorMessage: null,
-			reservedCredits: remainingCredits,
-			retryCount: nextRetryCount,
-			finishedAt: null,
-			updatedAt: new Date()
-		})
-		.where(eq(generationJobs.id, jobId))
-		.returning();
-	await publishJobEvent(jobId, 'job.status', {
-		status: 'queued',
-		stage: 'queued',
-		progress: 0,
-		message: '任务已重新进入队列'
-	});
-	return updated;
+			message: '任务已重新进入队列'
+		});
+		await enqueueGenerationJob(jobId, nextRetryCount);
+		return updated;
+	} catch (error) {
+		await settleCredits(job.userId, `${jobId}:${nextRetryCount}`, remainingCredits, 0);
+		await db
+			.update(generationJobs)
+			.set({
+				status: job.status,
+				stage: job.stage,
+				progress: job.progress,
+				errorCode: job.errorCode,
+				errorMessage: job.errorMessage,
+				reservedCredits: 0,
+				retryCount: nextRetryCount,
+				finishedAt: job.finishedAt,
+				updatedAt: new Date()
+			})
+			.where(eq(generationJobs.id, jobId));
+		throw error;
+	}
 }
 
 export async function deleteAssetForUser(assetId: string, userId: string) {

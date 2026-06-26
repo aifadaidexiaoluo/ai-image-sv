@@ -7,7 +7,6 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"worker": "bun run src/worker.ts",
 		"test": "bun test",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -66,6 +65,8 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
-		"@tanstack/svelte-form": "^1.33.0"
+		"@tanstack/svelte-form": "^1.33.0",
+		"bullmq": "^5.79.1",
+		"ioredis": "^5.11.1"
 	}
 }

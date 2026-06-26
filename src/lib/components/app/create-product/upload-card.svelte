@@ -89,12 +89,12 @@
 				if (!preview) openFilePicker();
 			}}
 			class={cn(
-				'mt-4 grid min-h-[184px] place-items-center overflow-hidden rounded-[10px] border border-dashed bg-[#fbfaff] text-center transition',
+				'mt-4 grid min-h-46 place-items-center overflow-hidden rounded-[10px] border border-dashed bg-[#fbfaff] text-center transition',
 				isDragging ? 'border-primary bg-primary/5' : 'border-primary/45 hover:border-primary'
 			)}
 		>
 			{#if preview}
-				<div class="relative size-full min-h-[184px]">
+				<div class="relative size-full min-h-46">
 					<img src={preview} alt="上传预览" class="size-full object-contain" />
 					<div class="absolute right-3 top-3 flex gap-2">
 						<Button

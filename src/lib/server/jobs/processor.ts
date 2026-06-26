@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm';
-import { client, db } from '$lib/server/db';
+import { and, eq } from 'drizzle-orm';
+import { db } from '$lib/server/db';
 import { assets, generationJobs, generationOutputs } from '$lib/server/db/schema';
 import { settleCredits } from '$lib/server/credits';
 import { backgroundRemovalProvider, getImageProvider } from '$lib/server/providers';
@@ -58,40 +58,19 @@ async function saveOutput(
 	return asset;
 }
 
-export async function claimNextJob() {
-	const rows = await client<Job[]>`
-		update generation_jobs
-		set status = 'running', stage = 'validating', started_at = coalesce(started_at, now()),
-			heartbeat_at = now(), updated_at = now()
-		where id = (
-			select id from generation_jobs
-			where status = 'queued'
-			order by created_at asc
-			for update skip locked
-			limit 1
-		)
-		returning *
-	`;
-	return rows[0] ?? null;
-}
-
-export async function recoverStaleJobs() {
-	const recovered = await client<Array<{ id: string }>>`
-		update generation_jobs
-		set status = 'queued', stage = 'queued', progress = 0, updated_at = now()
-		where status = 'running'
-			and heartbeat_at < now() - interval '30 minutes'
-		returning id
-	`;
-	for (const job of recovered) {
-		await publishJobEvent(job.id, 'job.status', {
-			status: 'queued',
-			stage: 'queued',
-			progress: 0,
-			message: 'Worker 中断，任务已自动恢复'
-		});
-	}
-	return recovered.length;
+export async function claimQueuedJob(jobId: string) {
+	const [job] = await db
+		.update(generationJobs)
+		.set({
+			status: 'running',
+			stage: 'validating',
+			startedAt: new Date(),
+			heartbeatAt: new Date(),
+			updatedAt: new Date()
+		})
+		.where(and(eq(generationJobs.id, jobId), eq(generationJobs.status, 'queued')))
+		.returning();
+	return job ?? null;
 }
 
 export async function processJob(job: Job) {

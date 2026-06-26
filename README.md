@@ -11,10 +11,10 @@ DesignAI 是一个基于 SvelteKit 2、Svelte 5、Better Auth、Drizzle、Postgr
    cp .env.example .env
    ```
 
-2. 启动 PostgreSQL 和 MinIO。若本机端口未被占用，可直接运行：
+2. 启动 PostgreSQL、Redis 和 MinIO。若本机端口未被占用，可直接运行：
 
    ```sh
-   docker compose up -d postgres minio minio-init
+   docker compose up -d postgres redis minio minio-init
    ```
 
 3. 创建数据库表：
@@ -23,11 +23,10 @@ DesignAI 是一个基于 SvelteKit 2、Svelte 5、Better Auth、Drizzle、Postgr
    bun run db:migrate
    ```
 
-4. 分别启动 Web 服务和图片 Worker：
+4. 启动 Web 服务：
 
    ```sh
    bun run dev
-   bun run worker
    ```
 
 `.env.example` 默认启用 `MOCK_AI=true`，不需要外部模型密钥也能走通完整生成流程。开发环境未配置邮件网关时，验证邮箱和重置密码链接会输出到服务端控制台。
@@ -41,7 +40,7 @@ MinIO 控制台默认位于 `http://localhost:9001`，账号与密码均为 `min
 - `REMOVE_BG_API_KEY`：启用托管抠图服务。
 - `MOCK_AI=true`：始终使用本地模拟图片，适合开发和端到端验收。
 
-任务由独立 Worker 从 PostgreSQL 原子领取。Worker 先持久化进度事件，再由 SSE 接口推送给页面；连接中断时前端会重连并按事件 ID 续传。运行中断超过 30 分钟的任务会自动恢复到队列。
+任务由内置 BullMQ 队列通过 Redis 调度，SvelteKit 服务端启动时会初始化图片处理消费者。处理器先持久化进度事件，再由 SSE 接口推送给页面；连接中断时前端会重连并按事件 ID 续传。
 
 ## 认证与管理员
 
@@ -56,4 +55,4 @@ bun test
 bun run build
 ```
 
-生产部署需要同时运行 Node adapter 生成的 Web 服务和 `bun run worker`，并在发布阶段先执行 `bun run db:migrate`。
+生产部署需要运行 Node adapter 生成的 Web 服务、PostgreSQL、Redis 和对象存储，并在发布阶段先执行 `bun run db:migrate`。
