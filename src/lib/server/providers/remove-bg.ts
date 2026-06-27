@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/private';
 import type { BackgroundRemovalProvider } from './types';
 import { createProviderResponseError } from './errors';
 
@@ -5,12 +6,12 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
 	id = 'remove-bg';
 
 	async removeBackground(source: { bytes: Uint8Array; mimeType: string }) {
-		if (!process.env.REMOVE_BG_API_KEY) throw new Error('REMOVE_BG_NOT_CONFIGURED');
+		if (!env.REMOVE_BG_API_KEY) throw new Error('REMOVE_BG_NOT_CONFIGURED');
 		const imageBase64 = Buffer.from(source.bytes).toString('base64');
 		const response = await fetch('https://api.zhuimengapi.com/api/v1/kotu', {
 			method: 'POST',
 			headers: {
-				'X-API-Key': process.env.REMOVE_BG_API_KEY,
+				'X-API-Key': env.REMOVE_BG_API_KEY,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({ image_base64: imageBase64 })

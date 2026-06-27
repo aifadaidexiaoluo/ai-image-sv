@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/private';
 import type { GeneratedImage, GenerationRequest, ImageGenerationProvider } from './types';
 import { createProviderResponseError } from './errors';
 
@@ -5,19 +6,19 @@ export class TongyiImageProvider implements ImageGenerationProvider {
 	id = 'tongyi' as const;
 
 	async generate(request: GenerationRequest): Promise<GeneratedImage[]> {
-		if (!process.env.DASHSCOPE_API_KEY) throw new Error('TONGYI_NOT_CONFIGURED');
+		if (!env.DASHSCOPE_API_KEY) throw new Error('TONGYI_NOT_CONFIGURED');
 		const response = await fetch(
-			process.env.DASHSCOPE_IMAGE_ENDPOINT ??
+			env.DASHSCOPE_IMAGE_ENDPOINT ??
 				'https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis',
 			{
 				method: 'POST',
 				headers: {
-					authorization: `Bearer ${process.env.DASHSCOPE_API_KEY}`,
+					authorization: `Bearer ${env.DASHSCOPE_API_KEY}`,
 					'content-type': 'application/json',
 					'X-DashScope-Async': 'disable'
 				},
 				body: JSON.stringify({
-					model: process.env.DASHSCOPE_IMAGE_MODEL ?? 'wanx-v1',
+					model: env.DASHSCOPE_IMAGE_MODEL ?? 'wanx-v1',
 					input: { prompt: request.prompt },
 					parameters: { n: request.count, size: '1024*1024' }
 				})

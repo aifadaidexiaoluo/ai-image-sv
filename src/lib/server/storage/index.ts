@@ -1,6 +1,7 @@
 import { Client, type ClientOptions } from 'minio';
 import { Buffer } from 'node:buffer';
 import type { Readable } from 'node:stream';
+import { env } from '$env/dynamic/private';
 
 export interface UploadDescriptor {
 	objectKey: string;
@@ -18,7 +19,7 @@ export interface StorageProvider {
 
 function endpointUrl(value: string) {
 	if (/^https?:\/\//i.test(value)) return new URL(value);
-	return new URL(`${process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http'}://${value}`);
+	return new URL(`${env.MINIO_USE_SSL === 'true' ? 'https' : 'http'}://${value}`);
 }
 
 function clientOptionsFromEndpoint(endpoint: URL): ClientOptions {
@@ -26,8 +27,9 @@ function clientOptionsFromEndpoint(endpoint: URL): ClientOptions {
 		endPoint: endpoint.hostname,
 		port: endpoint.port ? Number(endpoint.port) : undefined,
 		useSSL: endpoint.protocol === 'https:',
-		accessKey: process.env.MINIO_ACCESS_KEY ?? 'minioadmin',
-		secretKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin',
+		accessKey: env.MINIO_ACCESS_KEY ?? 'minioadmin',
+		secretKey: env.MINIO_SECRET_KEY ?? 'minioadmin',
+		region: env.MINIO_REGION ?? 'us-east-1',
 		pathStyle: true
 	};
 }
@@ -41,13 +43,11 @@ async function streamToBytes(stream: Readable) {
 }
 
 class MinioStorageProvider implements StorageProvider {
-	private readonly internalEndpoint = endpointUrl(
-		process.env.MINIO_ENDPOINT ?? 'http://127.0.0.1:9000'
-	);
+	private readonly internalEndpoint = endpointUrl(env.MINIO_ENDPOINT ?? 'http://127.0.0.1:9000');
 	private readonly publicEndpoint = endpointUrl(
-		process.env.MINIO_PUBLIC_ENDPOINT ?? this.internalEndpoint.toString()
+		env.MINIO_PUBLIC_ENDPOINT ?? this.internalEndpoint.toString()
 	);
-	private readonly bucket = process.env.MINIO_BUCKET ?? 'designai';
+	private readonly bucket = env.MINIO_BUCKET ?? 'designai';
 	private readonly internalClient = new Client(clientOptionsFromEndpoint(this.internalEndpoint));
 	private readonly publicClient = new Client(clientOptionsFromEndpoint(this.publicEndpoint));
 

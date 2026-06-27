@@ -106,9 +106,12 @@
 				<img
 					src={tool.image}
 					alt=""
-					class={cn('absolute right-0 bottom-0 object-contain transition group-hover:scale-105', {
-						'h-43.5 w-47.5 -translate-x-2 translate-y-1': tool.title === '智能抠图'
-					})}
+					class={cn(
+						'absolute right-0 bottom-0 top-0 object-contain transition group-hover:scale-105',
+						{
+							'h-43.5 w-47.5 -translate-x-2 translate-y-1': tool.title === '智能抠图'
+						}
+					)}
 				/>
 			</a>
 		{/each}
@@ -126,7 +129,7 @@
 		{#if data.jobs.length}
 			{#each data.jobs as job (job!.id)}
 				{#if job}<div
-						class="grid min-h-[68px] grid-cols-[64px_260px_1fr_74px_72px] items-center gap-4 border-b border-[#eef1f7] px-5 last:border-b-0"
+						class="grid min-h-17 grid-cols-[64px_260px_1fr_74px_72px] items-center gap-4 border-b border-[#eef1f7] px-5 last:border-b-0"
 					>
 						<img
 							src={jobPreview(job)}
