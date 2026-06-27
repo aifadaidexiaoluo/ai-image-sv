@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import UserMenu from '$lib/components/account/user-menu.svelte';
 	import NotificationsPopover from '$lib/components/app/notifications-popover.svelte';
+	import LogoMark from '$lib/components/brand/logo-mark.svelte';
 	import {
 		Coins,
 		CreditCard,
@@ -39,10 +40,7 @@
 		class="sticky top-0 flex h-screen flex-col border-r border-[#e8eaf6] bg-white/90 px-8 py-9 shadow-[14px_0_40px_rgba(91,61,245,0.045)] backdrop-blur"
 	>
 		<a href={resolve('/')} class="flex items-center gap-3 text-[21px] font-black text-primary"
-			><span
-				class="grid size-10 place-items-center rounded-xl bg-primary text-white shadow-lg shadow-primary/25"
-				><Sparkles class="size-5" /></span
-			>DesignAI</a
+			><LogoMark class="size-10 drop-shadow-[0_8px_16px_rgba(91,61,245,0.25)]" />DesignAI</a
 		>
 		<nav class="mt-8 space-y-3">
 			{#each navigation as item (item.href)}<a

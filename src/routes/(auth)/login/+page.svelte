@@ -2,6 +2,10 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import AuthShell from '$lib/components/auth/auth-shell.svelte';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import * as m from '$lib/paraglide/messages';
 	import type { ActionData } from './$types';
 
@@ -12,39 +16,44 @@
 
 <AuthShell title={m.auth_login_title()} description={m.auth_login_description()}>
 	<form method="POST" use:enhance class="space-y-5">
-		<label class="block text-sm font-medium"
-			>{m.auth_email()}
-			<input
-				class="mt-2 h-12 w-full rounded-xl border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30"
+		<div class="space-y-2">
+			<Label for="email">{m.auth_email()}</Label>
+			<Input
+				id="email"
+				class="h-12 rounded-xl bg-white px-4"
 				type="email"
 				name="email"
 				autocomplete="email"
+				placeholder="you@example.com"
 				required
 				value={form?.email ?? ''}
 			/>
-		</label>
-		<label class="block text-sm font-medium"
-			>{m.auth_password()}
-			<input
-				class="mt-2 h-12 w-full rounded-xl border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30"
+		</div>
+		<div class="space-y-2">
+			<Label for="password">{m.auth_password()}</Label>
+			<Input
+				id="password"
+				class="h-12 rounded-xl bg-white px-4"
 				type="password"
 				name="password"
 				autocomplete="current-password"
 				required
-				minlength="12"
+				minlength={12}
 			/>
-		</label>
+		</div>
 		<div class="flex justify-end">
 			<a class="text-sm text-primary hover:underline" href={resolve('/forgot-password')}
 				>{m.auth_forgot_password()}</a
 			>
 		</div>
-		{#if form?.message}<p class="rounded-xl bg-red-50 p-3 text-sm text-red-600">
-				{form.message}
-			</p>{/if}
-		<button class="h-12 w-full rounded-xl bg-primary font-semibold text-white hover:bg-primary/90"
-			>{m.auth_login_submit()}</button
-		>
+		{#if form?.message}
+			<Alert variant="destructive" class="rounded-xl border-destructive/20 bg-destructive/5">
+				<AlertDescription>{form.message}</AlertDescription>
+			</Alert>
+		{/if}
+		<Button type="submit" size="lg" class="h-12 w-full rounded-xl text-base font-semibold">
+			{m.auth_login_submit()}
+		</Button>
 		<p class="text-center text-sm text-muted-foreground">
 			{m.auth_no_account()}
 			<a href={resolve('/register')} class="font-medium text-primary hover:underline"
