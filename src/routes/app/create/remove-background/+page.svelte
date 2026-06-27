@@ -15,6 +15,7 @@
 	import { CircleAlert, Coins, LoaderCircle, Sparkles } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
 	import type { GenerationJob } from '$lib/types/jobs';
+	import type { AssetItem } from '$lib/components/app/assets/types';
 
 	type RemoveBackgroundFormValues = {
 		previewBackground: PreviewBackgroundId;
@@ -38,8 +39,9 @@
 
 	let file = $state<File>();
 	let preview = $state('');
+	let selectedAsset = $state<AssetItem>();
 	let error = $state('');
-	let activeJob = $state<GenerationJob>();
+	let activeJobs = $state<GenerationJob[]>([]);
 	let prefillNotice = $state('');
 
 	onDestroy(() => {
@@ -73,7 +75,15 @@
 		revokePreview();
 		file = selected;
 		preview = URL.createObjectURL(selected);
-		activeJob = undefined;
+		selectedAsset = undefined;
+		error = '';
+	}
+
+	function selectSourceAsset(asset: AssetItem) {
+		revokePreview();
+		file = undefined;
+		preview = '';
+		selectedAsset = asset;
 		error = '';
 	}
 
@@ -81,7 +91,7 @@
 		revokePreview();
 		file = undefined;
 		preview = '';
-		activeJob = undefined;
+		selectedAsset = undefined;
 		error = '';
 	}
 
@@ -119,11 +129,12 @@
 	}
 
 	function validateSubmission() {
-		if (!file) return '请先上传一张需要抠图的图片';
+		if (!file && !selectedAsset) return '请先上传或选择一张需要抠图的图片';
 		return '';
 	}
 
 	async function uploadSource() {
+		if (selectedAsset) return selectedAsset.id;
 		if (!file) return undefined;
 		const presign = await fetch('/api/uploads/presign', {
 			method: 'POST',
@@ -165,7 +176,7 @@
 			});
 			const payload = await response.json();
 			if (!response.ok) throw new Error(payload.message);
-			activeJob = { ...payload.job, outputs: [] };
+			activeJobs = [{ ...payload.job, outputs: [] }, ...activeJobs];
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : '创建任务失败';
 		}
@@ -203,8 +214,11 @@
 						{values}
 						background={selectedBackground(values.previewBackground)}
 						{file}
-						{preview}
+						preview={selectedAsset?.url ?? preview}
+						sourceName={selectedAsset?.displayName}
+						selectedAssetId={selectedAsset?.id}
 						onFileSelected={setSourceFile}
+						onAssetSelected={selectSourceAsset}
 						onClearFile={clearFile}
 						onBackgroundChange={setBackground}
 						onShowOriginalChange={setShowOriginal}
@@ -257,12 +271,6 @@
 					</form.Subscribe>
 				</Card.Content>
 			</Card.Root>
-
-			{#if activeJob}
-				<JobCard initialJob={activeJob} />
-			{:else}
-				<ResultEmpty />
-			{/if}
 		</div>
 
 		<form.Subscribe selector={(state) => state.values.previewBackground}>
@@ -271,9 +279,19 @@
 					<BackgroundPreviewPanel
 						backgrounds={previewBackgrounds}
 						selectedBackground={previewBackground}
-						{preview}
+						preview={selectedAsset?.url ?? preview}
 						onSelect={setBackground}
 					/>
+
+					{#if activeJobs.length}
+						<div class="space-y-4">
+							{#each activeJobs as job (job.id)}
+								<JobCard initialJob={job} />
+							{/each}
+						</div>
+					{:else}
+						<ResultEmpty />
+					{/if}
 				</aside>
 			{/snippet}
 		</form.Subscribe>

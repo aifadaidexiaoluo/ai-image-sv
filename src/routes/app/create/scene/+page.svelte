@@ -17,6 +17,7 @@
 	import { CircleAlert, Coins, WandSparkles } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
 	import { onDestroy, onMount } from 'svelte';
+	import type { AssetItem } from '$lib/components/app/assets/types';
 	import type { PageData } from './$types';
 
 	type SceneFormValues = {
@@ -34,6 +35,10 @@
 			url?: string;
 			headers?: Record<string, string>;
 		};
+		message?: string;
+	};
+	type SceneTemplateGenerateResponse = {
+		template?: UserSceneTemplate;
 		message?: string;
 	};
 
@@ -59,8 +64,9 @@
 	let category = $state<SceneCategoryId>('all');
 	let file = $state<File>();
 	let preview = $state('');
+	let selectedAsset = $state<AssetItem>();
 	let error = $state('');
-	let activeJob = $state<GenerationJob>();
+	let activeJobs = $state<GenerationJob[]>([]);
 	let uploadedSceneTemplates = $state<UserSceneTemplate[]>([]);
 	let prefillNotice = $state('');
 	const userSceneTemplates = $derived([...uploadedSceneTemplates, ...data.userSceneTemplates]);
@@ -154,6 +160,15 @@
 		revokePreview();
 		file = selected;
 		preview = URL.createObjectURL(selected);
+		selectedAsset = undefined;
+		error = '';
+	}
+
+	function selectSourceAsset(asset: AssetItem) {
+		revokePreview();
+		file = undefined;
+		preview = '';
+		selectedAsset = asset;
 		error = '';
 	}
 
@@ -161,6 +176,7 @@
 		revokePreview();
 		file = undefined;
 		preview = '';
+		selectedAsset = undefined;
 	}
 
 	function selectScene(sceneId: string) {
@@ -223,11 +239,12 @@
 	}
 
 	function validateSubmission() {
-		if (!file) return '请先上传商品图';
+		if (!file && !selectedAsset) return '请先上传或选择商品图';
 		return '';
 	}
 
 	async function uploadSource() {
+		if (selectedAsset) return selectedAsset.id;
 		if (!file) return undefined;
 		const presign = await fetch('/api/uploads/presign', {
 			method: 'POST',
@@ -275,6 +292,22 @@
 		error = '';
 	}
 
+	async function generateSceneTemplate(input: { title: string; category: string; prompt: string }) {
+		const response = await fetch('/api/scene-templates/generate', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(input)
+		});
+		const payload = (await response.json()) as SceneTemplateGenerateResponse;
+		if (!response.ok || !payload.template) {
+			throw new Error(payload.message ?? '模板生成失败');
+		}
+		uploadedSceneTemplates = [payload.template, ...uploadedSceneTemplates];
+		category = payload.template.category as SceneCategoryId;
+		form.setFieldValue('selectedSceneId', `user:${payload.template.id}`);
+		error = '';
+	}
+
 	async function submit(value: SceneFormValues) {
 		error = '';
 		const validationError = validateSubmission();
@@ -312,7 +345,7 @@
 			});
 			const payload = await response.json();
 			if (!response.ok) throw new Error(payload.message);
-			activeJob = { ...payload.job, outputs: [] };
+			activeJobs = [{ ...payload.job, outputs: [] }, ...activeJobs];
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : '创建任务失败';
 		}
@@ -347,6 +380,7 @@
 						onCategoryChange={selectCategory}
 						onSceneSelect={selectScene}
 						onTemplateCreate={createSceneTemplate}
+						onTemplateGenerate={generateSceneTemplate}
 					/>
 				{/snippet}
 			</form.Subscribe>
@@ -387,27 +421,36 @@
 					</form.Subscribe>
 				</Card.Content>
 			</Card.Root>
-
-			{#if activeJob}
-				<JobCard initialJob={activeJob} />
-			{:else}
-				<ResultEmpty />
-			{/if}
 		</div>
 
 		<form.Subscribe selector={(state) => state.values}>
 			{#snippet children(values)}
-				<SceneSidePanel
-					{values}
-					selectedScene={selectedScene(values.selectedSceneId)}
-					{file}
-					{preview}
-					onFileSelected={setSourceFile}
-					onClearFile={clearFile}
-					onPositionChange={setPosition}
-					onScaleChange={setScale}
-					onToggle={setToggle}
-				/>
+				<div class="space-y-5">
+					<SceneSidePanel
+						{values}
+						selectedScene={selectedScene(values.selectedSceneId)}
+						{file}
+						preview={selectedAsset?.url ?? preview}
+						sourceName={selectedAsset?.displayName}
+						selectedAssetId={selectedAsset?.id}
+						onFileSelected={setSourceFile}
+						onAssetSelected={selectSourceAsset}
+						onClearFile={clearFile}
+						onPositionChange={setPosition}
+						onScaleChange={setScale}
+						onToggle={setToggle}
+					/>
+
+					{#if activeJobs.length}
+						<div class="space-y-4">
+							{#each activeJobs as job (job.id)}
+								<JobCard initialJob={job} />
+							{/each}
+						</div>
+					{:else}
+						<ResultEmpty />
+					{/if}
+				</div>
 			{/snippet}
 		</form.Subscribe>
 	</form>

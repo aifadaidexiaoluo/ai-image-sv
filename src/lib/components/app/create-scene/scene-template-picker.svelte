@@ -7,8 +7,9 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { NativeSelect, NativeSelectOption } from '$lib/components/ui/native-select';
-	import { Check, CircleAlert, ImagePlus, LoaderCircle, Upload, X } from '@lucide/svelte';
+	import * as Select from '$lib/components/ui/select';
+	import { Textarea } from '$lib/components/ui/textarea';
+	import { Check, CircleAlert, ImagePlus, LoaderCircle, Sparkles, Upload, X } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
 	import { cn } from '$lib/utils';
 
@@ -36,6 +37,9 @@
 		title: string;
 		category: string;
 	};
+	type TemplateGenerateValues = TemplateUploadValues & {
+		prompt: string;
+	};
 
 	let {
 		category,
@@ -43,7 +47,8 @@
 		userTemplates = [],
 		onCategoryChange,
 		onSceneSelect,
-		onTemplateCreate
+		onTemplateCreate,
+		onTemplateGenerate
 	}: {
 		category: SceneCategoryId;
 		selectedSceneId: string;
@@ -51,6 +56,7 @@
 		onCategoryChange: (category: SceneCategoryId) => void;
 		onSceneSelect: (sceneId: string) => void;
 		onTemplateCreate: (input: TemplateUploadValues & { file: File }) => Promise<void>;
+		onTemplateGenerate: (input: TemplateGenerateValues) => Promise<void>;
 	} = $props();
 
 	const realCategories = sceneCategories.filter((item) => item.id !== 'all');
@@ -65,11 +71,23 @@
 			await createTemplate(value);
 		}
 	}));
+	const generateForm = createForm(() => ({
+		defaultValues: {
+			title: '',
+			category: realCategories[0]?.id ?? 'home',
+			prompt: ''
+		} as TemplateGenerateValues,
+		onSubmit: async ({ value }) => {
+			await generateTemplate(value);
+		}
+	}));
 
 	let uploadOpen = $state(false);
+	let generateOpen = $state(false);
 	let templateFile = $state<File>();
 	let templatePreview = $state('');
 	let uploadError = $state('');
+	let generateError = $state('');
 	let fileInput = $state<HTMLInputElement>();
 
 	const allScenes = $derived<SceneTemplateCard[]>([
@@ -94,6 +112,10 @@
 	const filteredScenes = $derived(
 		category === 'all' ? allScenes : allScenes.filter((item) => item.category === category)
 	);
+
+	function categoryLabel(value: string) {
+		return realCategories.find((item) => item.id === value)?.name ?? '选择分类';
+	}
 
 	onDestroy(() => {
 		revokeTemplatePreview();
@@ -154,6 +176,17 @@
 			uploadError = cause instanceof Error ? cause.message : '模板上传失败';
 		}
 	}
+
+	async function generateTemplate(value: TemplateGenerateValues) {
+		generateError = '';
+		try {
+			await onTemplateGenerate(value);
+			generateForm.reset();
+			generateOpen = false;
+		} catch (cause) {
+			generateError = cause instanceof Error ? cause.message : '模板生成失败';
+		}
+	}
 </script>
 
 <section
@@ -185,23 +218,194 @@
 				可使用公共模板，也可以上传仅自己可见的场景模板
 			</p>
 		</div>
-		<Button
-			type="button"
-			variant={uploadOpen ? 'secondary' : 'outline'}
-			size="sm"
-			onclick={() => {
-				uploadOpen = !uploadOpen;
-				uploadError = '';
-			}}
-			class="h-9 rounded-[7px] border-primary/35 px-4 font-black text-primary hover:bg-primary/5 hover:text-primary"
-		>
-			{#if uploadOpen}
-				<X class="size-4" />收起上传
-			{:else}
-				<Upload class="size-4" />上传模板
-			{/if}
-		</Button>
+		<div class="flex flex-wrap items-center gap-2">
+			<Button
+				type="button"
+				variant={generateOpen ? 'secondary' : 'outline'}
+				size="sm"
+				onclick={() => {
+					generateOpen = !generateOpen;
+					if (generateOpen) uploadOpen = false;
+					generateError = '';
+				}}
+				class="h-9 rounded-[7px] border-primary/35 px-4 font-black text-primary hover:bg-primary/5 hover:text-primary"
+			>
+				{#if generateOpen}
+					<X class="size-4" />收起生成
+				{:else}
+					<Sparkles class="size-4" />AI 生成模板
+				{/if}
+			</Button>
+			<Button
+				type="button"
+				variant={uploadOpen ? 'secondary' : 'outline'}
+				size="sm"
+				onclick={() => {
+					uploadOpen = !uploadOpen;
+					if (uploadOpen) generateOpen = false;
+					uploadError = '';
+				}}
+				class="h-9 rounded-[7px] border-primary/35 px-4 font-black text-primary hover:bg-primary/5 hover:text-primary"
+			>
+				{#if uploadOpen}
+					<X class="size-4" />收起上传
+				{:else}
+					<Upload class="size-4" />上传模板
+				{/if}
+			</Button>
+		</div>
 	</div>
+
+	{#if generateOpen}
+		<div class="mt-5 rounded-[14px] border border-dashed border-primary/30 bg-[#fbfaff] p-4">
+			{#if generateError}
+				<Alert variant="destructive" class="mb-4">
+					<CircleAlert class="size-4" />
+					<AlertDescription>{generateError}</AlertDescription>
+				</Alert>
+			{/if}
+
+			<div class="grid gap-4 lg:grid-cols-[1fr_1fr]">
+				<generateForm.Field
+					name="title"
+					validators={{
+						onChange: ({ value }) => {
+							const title = value.trim();
+							if (!title) return '请输入模板标题';
+							if (title.length > 60) return '标题不能超过 60 个字符';
+							return undefined;
+						}
+					}}
+				>
+					{#snippet children(field)}
+						<div>
+							<Label
+								for="scene-template-generate-title"
+								class="text-[13px] font-black text-[#26324a]"
+							>
+								模板标题
+							</Label>
+							<Input
+								id="scene-template-generate-title"
+								value={field.state.value}
+								placeholder="例如：秋日窗边咖啡桌"
+								class="mt-2 h-10 rounded-[8px] bg-white"
+								onblur={() => field.handleBlur()}
+								oninput={(event: Event) => {
+									field.handleChange((event.target as HTMLInputElement).value);
+								}}
+							/>
+							{#if field.state.meta.errors?.[0]}
+								<p class="mt-1 text-[12px] font-medium text-destructive">
+									{field.state.meta.errors[0]}
+								</p>
+							{/if}
+						</div>
+					{/snippet}
+				</generateForm.Field>
+
+				<generateForm.Field
+					name="category"
+					validators={{
+						onChange: ({ value }) => (!value ? '请选择分类' : undefined)
+					}}
+				>
+					{#snippet children(field)}
+						<div>
+							<Label
+								for="scene-template-generate-category"
+								class="text-[13px] font-black text-[#26324a]"
+							>
+								模板分类
+							</Label>
+							<Select.Root
+								type="single"
+								value={field.state.value}
+								onValueChange={(value) => field.handleChange(value)}
+							>
+								<Select.Trigger
+									id="scene-template-generate-category"
+									class="mt-2 h-10 w-full rounded-[8px] bg-white text-[14px] font-bold text-[#30405f]"
+								>
+									{categoryLabel(field.state.value)}
+								</Select.Trigger>
+								<Select.Content>
+									{#each realCategories as item (item.id)}
+										<Select.Item value={item.id}>{item.name}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</div>
+					{/snippet}
+				</generateForm.Field>
+			</div>
+
+			<generateForm.Field
+				name="prompt"
+				validators={{
+					onChange: ({ value }) => {
+						const prompt = value.trim();
+						if (prompt.length < 8) return '请至少描述 8 个字符';
+						if (prompt.length > 500) return '描述不能超过 500 个字符';
+						return undefined;
+					}
+				}}
+			>
+				{#snippet children(field)}
+					<div class="mt-4">
+						<Label
+							for="scene-template-generate-prompt"
+							class="text-[13px] font-black text-[#26324a]"
+						>
+							场景描述
+						</Label>
+						<Textarea
+							id="scene-template-generate-prompt"
+							value={field.state.value}
+							placeholder="描述背景、光线、材质、季节氛围和适合摆放商品的位置，例如：自然光洒入的木质厨房台面，浅色背景，中央留出干净商品摆放区"
+							class="mt-2 min-h-24 rounded-[8px] bg-white"
+							onblur={() => field.handleBlur()}
+							oninput={(event: Event) => {
+								field.handleChange((event.target as HTMLTextAreaElement).value);
+							}}
+						/>
+						{#if field.state.meta.errors?.[0]}
+							<p class="mt-1 text-[12px] font-medium text-destructive">
+								{field.state.meta.errors[0]}
+							</p>
+						{/if}
+					</div>
+				{/snippet}
+			</generateForm.Field>
+
+			<div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+				<p class="text-[12px] font-medium text-[#8c96ac]">
+					AI 会生成无商品的 16:9 场景模板，保存后仅你自己可见。消耗 2 积分。
+				</p>
+				<generateForm.Subscribe selector={(state) => state.isSubmitting}>
+					{#snippet children(isSubmitting)}
+						<Button
+							type="button"
+							size="sm"
+							disabled={isSubmitting}
+							onclick={(event) => {
+								event.preventDefault();
+								event.stopPropagation();
+								void generateForm.handleSubmit();
+							}}
+							class="h-9 rounded-[7px] px-4 font-black"
+						>
+							{#if isSubmitting}
+								<LoaderCircle class="size-4 animate-spin" />生成中
+							{:else}
+								<Sparkles class="size-4" />生成并保存
+							{/if}
+						</Button>
+					{/snippet}
+				</generateForm.Subscribe>
+			</div>
+		</div>
+	{/if}
 
 	{#if uploadOpen}
 		<div class="mt-5 rounded-[14px] border border-dashed border-primary/30 bg-[#fbfaff] p-4">
@@ -259,18 +463,23 @@
 							<Label for="scene-template-category" class="text-[13px] font-black text-[#26324a]">
 								模板分类
 							</Label>
-							<NativeSelect
-								id="scene-template-category"
+							<Select.Root
+								type="single"
 								value={field.state.value}
-								class="mt-2 w-full [&_select]:h-10 [&_select]:rounded-[8px] [&_select]:bg-white"
-								onchange={(event: Event) => {
-									field.handleChange((event.target as HTMLSelectElement).value);
-								}}
+								onValueChange={(value) => field.handleChange(value)}
 							>
-								{#each realCategories as item (item.id)}
-									<NativeSelectOption value={item.id}>{item.name}</NativeSelectOption>
-								{/each}
-							</NativeSelect>
+								<Select.Trigger
+									id="scene-template-category"
+									class="mt-2 h-10 w-full rounded-[8px] bg-white text-[14px] font-bold text-[#30405f]"
+								>
+									{categoryLabel(field.state.value)}
+								</Select.Trigger>
+								<Select.Content>
+									{#each realCategories as item (item.id)}
+										<Select.Item value={item.id}>{item.name}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
 						</div>
 					{/snippet}
 				</uploadForm.Field>

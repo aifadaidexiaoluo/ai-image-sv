@@ -4,19 +4,26 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Input } from '$lib/components/ui/input';
 	import { cn } from '$lib/utils';
-	import { Check } from '@lucide/svelte';
+	import { Check, WandSparkles } from '@lucide/svelte';
 
 	export type ProductStyleId = (typeof productStyles)[number]['id'];
 
 	let {
 		selectedStyleIds,
+		customStyle,
 		onToggle,
-		onToggleAll
+		onToggleAll,
+		onCustomStyleChange,
+		onCustomStyleBlur
 	}: {
 		selectedStyleIds: ProductStyleId[];
+		customStyle: string;
 		onToggle: (id: ProductStyleId) => void;
 		onToggleAll: () => void;
+		onCustomStyleChange: (value: string) => void;
+		onCustomStyleBlur: () => void;
 	} = $props();
 </script>
 
@@ -83,3 +90,22 @@
 		</div>
 	{/each}
 </div>
+
+<label
+	class="mt-5 flex flex-col gap-3 rounded-xl border border-[#dfe5f4] bg-[#fbfcff] p-4 shadow-[0_10px_24px_rgba(31,42,84,0.03)] sm:flex-row sm:items-center"
+>
+	<span class="flex min-w-[116px] items-center gap-2 text-[14px] font-black text-[#172033]">
+		<WandSparkles class="size-4 text-primary" />自定义风格
+	</span>
+	<div class="min-w-0 flex-1">
+		<Input
+			value={customStyle}
+			maxlength={80}
+			placeholder="例如：赛博朋克霓虹、复古胶片、东方新中式"
+			oninput={(event) => onCustomStyleChange((event.currentTarget as HTMLInputElement).value)}
+			onblur={onCustomStyleBlur}
+			class="h-10 rounded-[9px] border-[#d3dbef] bg-white px-3 text-[14px] font-semibold text-[#30405f] placeholder:text-[#a8b1c5] focus-visible:border-primary focus-visible:ring-primary/10"
+		/>
+	</div>
+	<span class="text-right text-[12px] font-semibold text-[#9aa5bb]">{customStyle.length} / 80</span>
+</label>

@@ -41,6 +41,7 @@ export type GenerationJob = {
 	parameters?: Record<string, unknown>;
 	consumedCredits?: number;
 	createdAt?: string | Date;
+	deletedAt?: string | Date | null;
 	errorMessage?: string | null;
 	outputs?: GenerationOutput[];
 };

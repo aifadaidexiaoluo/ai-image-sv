@@ -354,7 +354,8 @@ export const generationJobs = pgTable(
 		startedAt: timestamp('started_at', { withTimezone: true }),
 		finishedAt: timestamp('finished_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+		deletedAt: timestamp('deleted_at', { withTimezone: true })
 	},
 	(table) => [
 		index('generation_jobs_user_created_idx').on(table.userId, table.createdAt),

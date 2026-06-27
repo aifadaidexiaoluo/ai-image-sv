@@ -97,7 +97,11 @@ export async function getJobForUser(jobId: string, userId: string, isAdmin = fal
 	const job = await db.query.generationJobs.findFirst({
 		where: isAdmin
 			? eq(generationJobs.id, jobId)
-			: and(eq(generationJobs.id, jobId), eq(generationJobs.userId, userId))
+			: and(
+					eq(generationJobs.id, jobId),
+					eq(generationJobs.userId, userId),
+					isNull(generationJobs.deletedAt)
+				)
 	});
 	if (!job) return null;
 	const outputRows = await db
@@ -124,6 +128,7 @@ export async function listJobsForUser(userId: string, input: number | ListJobsFo
 	const pageSize = Math.min(positiveInteger(options.pageSize, 30), 100);
 	const filters = [
 		eq(generationJobs.userId, userId),
+		isNull(generationJobs.deletedAt),
 		options.tool ? eq(generationJobs.tool, options.tool) : undefined,
 		options.keyword ? ilike(generationJobs.prompt, `%${options.keyword}%`) : undefined
 	].filter(Boolean);
@@ -232,6 +237,21 @@ export async function deleteJobOutputAssetForUser(jobId: string, assetId: string
 	await storageProvider.deleteObject(row.asset.objectKey);
 	await db.update(assets).set({ deletedAt: new Date() }).where(eq(assets.id, row.asset.id));
 	return true;
+}
+
+export async function deleteJobForUser(jobId: string, userId: string) {
+	const [job] = await db
+		.update(generationJobs)
+		.set({ deletedAt: new Date(), updatedAt: new Date() })
+		.where(
+			and(
+				eq(generationJobs.id, jobId),
+				eq(generationJobs.userId, userId),
+				isNull(generationJobs.deletedAt)
+			)
+		)
+		.returning({ id: generationJobs.id });
+	return Boolean(job);
 }
 
 export async function removeOldJobEvents(jobIds: string[]) {

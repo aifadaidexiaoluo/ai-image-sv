@@ -4,7 +4,9 @@
 	import { Slider } from '$lib/components/ui/slider';
 	import { Switch } from '$lib/components/ui/switch';
 	import { cn } from '$lib/utils';
-	import { CloudUpload, ImagePlus, Plus, Sparkles, Trash2 } from '@lucide/svelte';
+	import { CloudUpload, FolderOpen, ImagePlus, Plus, Sparkles, Trash2 } from '@lucide/svelte';
+	import AssetPickerDialog from '$lib/components/app/assets/asset-picker-dialog.svelte';
+	import type { AssetItem } from '$lib/components/app/assets/types';
 	import PositionGrid, { type ProductPosition } from './position-grid.svelte';
 
 	type SceneSettings = {
@@ -24,7 +26,10 @@
 		selectedScene,
 		file,
 		preview,
+		sourceName,
+		selectedAssetId,
 		onFileSelected,
+		onAssetSelected,
 		onClearFile,
 		onPositionChange,
 		onScaleChange,
@@ -34,7 +39,10 @@
 		selectedScene: ScenePreview;
 		file?: File;
 		preview: string;
+		sourceName?: string;
+		selectedAssetId?: string;
 		onFileSelected: (file: File) => void;
+		onAssetSelected: (asset: AssetItem) => void;
 		onClearFile: () => void;
 		onPositionChange: (position: ProductPosition) => void;
 		onScaleChange: (scale: number) => void;
@@ -42,6 +50,7 @@
 	} = $props();
 
 	let fileInput = $state<HTMLInputElement>();
+	let pickerOpen = $state(false);
 
 	function selectFile(event: Event) {
 		const selected = (event.currentTarget as HTMLInputElement).files?.[0];
@@ -73,6 +82,15 @@
 					class="border-primary/45 text-primary hover:bg-primary/5 hover:text-primary"
 				>
 					<Plus class="size-4" />上传商品
+				</Button>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onclick={() => (pickerOpen = true)}
+					class="border-primary/45 text-primary hover:bg-primary/5 hover:text-primary"
+				>
+					<FolderOpen class="size-4" />素材库
 				</Button>
 			</div>
 
@@ -129,13 +147,13 @@
 				</div>
 				<div class="min-w-0 flex-1">
 					<p class="truncate text-[13px] font-black text-[#26324a]">
-						{file ? file.name : '未上传商品图'}
+						{file ? file.name : sourceName || '未上传商品图'}
 					</p>
 					<p class="mt-1 text-[12px] font-medium text-[#8c96ac]">
-						支持 JPG、PNG、WebP，大小不超过 10MB
+						支持 JPG、PNG、WebP，或从素材库选择
 					</p>
 				</div>
-				{#if file}
+				{#if file || sourceName}
 					<Button
 						type="button"
 						size="icon-sm"
@@ -235,3 +253,11 @@
 		</Card.Content>
 	</Card.Root>
 </aside>
+
+<AssetPickerDialog
+	bind:open={pickerOpen}
+	{selectedAssetId}
+	title="选择商品图素材"
+	description="从素材库中选择一张商品图作为场景图编辑的输入素材。"
+	onSelect={onAssetSelected}
+/>

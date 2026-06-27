@@ -2,8 +2,8 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import UserMenu from '$lib/components/account/user-menu.svelte';
+	import NotificationsPopover from '$lib/components/app/notifications-popover.svelte';
 	import {
-		Bell,
 		Coins,
 		CreditCard,
 		Crown,
@@ -81,9 +81,7 @@
 				>
 					<Crown class="size-4" />{data.account.planName}
 				</span>
-				<button class="grid size-10 place-items-center text-[#121826]" aria-label="通知">
-					<Bell class="size-5" />
-				</button>
+				<NotificationsPopover notifications={data.notifications} userId={data.account.user.id} />
 				<UserMenu user={data.account.user} />
 			</div>
 		</header>

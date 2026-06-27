@@ -9,6 +9,12 @@ const styleLabels: Record<string, string> = {
 	illustration: '手绘插画风格，轻盈装饰元素'
 };
 
+const qualityLabels: Record<string, string> = {
+	standard: '标准清晰度，画面干净自然',
+	hd: '高清细节，商品纹理与边缘更清楚',
+	ultra: '超清精修质感，强化细节、锐度与商业广告完成度'
+};
+
 const sceneLabels: Record<string, string> = {
 	'living-room': '简约客厅场景',
 	'bathroom-counter': '浴室台面场景',
@@ -38,6 +44,11 @@ export function buildGenerationPrompt(input: {
 			.filter(Boolean)
 			.join('，');
 		if (styleText) parts.push(`视觉风格：${styleText}`);
+		const customStyle =
+			typeof parameters.customStyle === 'string' ? parameters.customStyle.trim() : '';
+		if (customStyle) parts.push(`自定义风格：${customStyle}`);
+		const quality = qualityLabels[String(parameters.quality ?? '')];
+		if (quality) parts.push(`图片清晰度：${quality}`);
 		if (parameters.generationMode === 'reference') parts.push('参考上传图片的商品主体与材质特征');
 	}
 

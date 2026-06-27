@@ -37,6 +37,7 @@
 	let previewOpen = $state(false);
 	let retryingId = $state('');
 	let copiedId = $state('');
+	let deletingId = $state('');
 	let filterKeyword = $state(untrack(() => data.filters.keyword));
 	let filterSort = $state(untrack(() => data.filters.sort));
 	let filterPageSize = $state(untrack(() => String(data.pageSize)));
@@ -206,6 +207,10 @@
 
 	function outputLabel(output: HistoryOutput, index: number) {
 		return `生成结果 ${output.position + 1 || index + 1}`;
+	}
+
+	function trackDelete(job: HistoryJob) {
+		deletingId = job.id;
 	}
 </script>
 
@@ -402,6 +407,34 @@
 											<a href={createHref(job)} class="flex w-full items-center gap-2 px-1.5 py-2">
 												<Pencil class="size-4" />编辑并重新生成
 											</a>
+										</DropdownMenu.Item>
+										<DropdownMenu.Item class="p-0 text-red-500 focus:text-red-500">
+											<form
+												method="POST"
+												action="?/deleteJob"
+												use:enhance={() => {
+													return async ({ update }) => {
+														await update();
+														deletingId = '';
+													};
+												}}
+												class="w-full"
+											>
+												<input type="hidden" name="jobId" value={job.id} />
+												<button
+													type="submit"
+													onclick={() => trackDelete(job)}
+													disabled={deletingId === job.id}
+													class="flex w-full items-center gap-2 px-1.5 py-2 text-left disabled:opacity-60"
+												>
+													{#if deletingId === job.id}
+														<LoaderCircle class="size-4 animate-spin" />
+													{:else}
+														<Trash2 class="size-4" />
+													{/if}
+													删除任务
+												</button>
+											</form>
 										</DropdownMenu.Item>
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>

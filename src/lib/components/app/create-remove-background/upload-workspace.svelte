@@ -6,7 +6,9 @@
 	import { Slider } from '$lib/components/ui/slider';
 	import { Switch } from '$lib/components/ui/switch';
 	import { cn } from '$lib/utils';
-	import { Minus, Plus, RotateCcw, Trash2, UploadCloud } from '@lucide/svelte';
+	import { FolderOpen, Minus, Plus, RotateCcw, Trash2, UploadCloud } from '@lucide/svelte';
+	import AssetPickerDialog from '$lib/components/app/assets/asset-picker-dialog.svelte';
+	import type { AssetItem } from '$lib/components/app/assets/types';
 	import type { PreviewBackground, PreviewBackgroundId } from './types';
 
 	type WorkspaceValues = {
@@ -20,7 +22,10 @@
 		background,
 		file,
 		preview,
+		sourceName,
+		selectedAssetId,
 		onFileSelected,
+		onAssetSelected,
 		onClearFile,
 		onBackgroundChange,
 		onShowOriginalChange,
@@ -30,7 +35,10 @@
 		background: PreviewBackground;
 		file?: File;
 		preview: string;
+		sourceName?: string;
+		selectedAssetId?: string;
 		onFileSelected: (file: File) => void;
+		onAssetSelected: (asset: AssetItem) => void;
 		onClearFile: () => void;
 		onBackgroundChange: (background: PreviewBackgroundId) => void;
 		onShowOriginalChange: (checked: boolean) => void;
@@ -39,6 +47,7 @@
 
 	let fileInput = $state<HTMLInputElement>();
 	let isDragging = $state(false);
+	let pickerOpen = $state(false);
 	const quickBackgrounds = [
 		{ id: 'transparent', label: '透明棋盘', className: 'checkerboard-bg' },
 		{ id: 'white', label: '白色', className: 'bg-white' },
@@ -114,6 +123,15 @@
 				>
 					<UploadCloud class="size-4" />{file ? '替换图片' : '上传图片'}
 				</Button>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onclick={() => (pickerOpen = true)}
+					class="h-9 rounded-[7px] border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
+				>
+					<FolderOpen class="size-4" />素材库
+				</Button>
 			</div>
 		</div>
 	</Card.Header>
@@ -172,8 +190,20 @@
 								{isDragging ? '松开鼠标上传图片' : '点击上传或拖拽图片到这里'}
 							</p>
 							<p class="mt-2 text-[13px] font-medium leading-6 text-[#7a859e]">
-								支持 JPG、PNG、WebP，大小不超过 10MB。
+								支持 JPG、PNG、WebP，也可以从素材库选择。
 							</p>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onclick={(event) => {
+									event.stopPropagation();
+									pickerOpen = true;
+								}}
+								class="mt-4 border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
+							>
+								<FolderOpen class="size-4" />从素材库选择
+							</Button>
 						</div>
 					{/if}
 				</div>
@@ -188,13 +218,13 @@
 				<div class="mt-4 flex flex-wrap items-center justify-between gap-3">
 					<div class="min-w-0">
 						<p class="truncate text-[13px] font-black text-[#26324a]">
-							{file ? file.name : '尚未上传图片'}
+							{file ? file.name : sourceName || '尚未上传图片'}
 						</p>
 						<p class="mt-1 text-[12px] font-medium text-[#8c96ac]">
 							任务完成后，请在结果卡片中下载透明 PNG。
 						</p>
 					</div>
-					{#if file}
+					{#if file || sourceName}
 						<Button
 							type="button"
 							variant="ghost"
@@ -284,6 +314,14 @@
 		</div>
 	</Card.Content>
 </Card.Root>
+
+<AssetPickerDialog
+	bind:open={pickerOpen}
+	{selectedAssetId}
+	title="选择抠图素材"
+	description="从素材库中选择一张图片作为智能抠图的输入素材。"
+	onSelect={onAssetSelected}
+/>
 
 <style>
 	.checkerboard-bg {

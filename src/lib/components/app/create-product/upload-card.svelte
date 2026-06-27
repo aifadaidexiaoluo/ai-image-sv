@@ -3,22 +3,31 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
-	import { CircleHelp, ImagePlus, Trash2, UploadCloud, X } from '@lucide/svelte';
+	import { CircleHelp, FolderOpen, ImagePlus, Trash2, UploadCloud, X } from '@lucide/svelte';
+	import AssetPickerDialog from '$lib/components/app/assets/asset-picker-dialog.svelte';
+	import type { AssetItem } from '$lib/components/app/assets/types';
 
 	let {
 		file,
 		preview,
+		sourceName,
+		selectedAssetId,
 		onFileSelected,
+		onAssetSelected,
 		onClear
 	}: {
 		file?: File;
 		preview: string;
+		sourceName?: string;
+		selectedAssetId?: string;
 		onFileSelected: (file: File) => void;
+		onAssetSelected: (asset: AssetItem) => void;
 		onClear: () => void;
 	} = $props();
 
 	let fileInput = $state<HTMLInputElement>();
 	let isDragging = $state(false);
+	let pickerOpen = $state(false);
 
 	function openFilePicker() {
 		fileInput?.click();
@@ -58,19 +67,30 @@
 	class="rounded-[18px] border border-[#e1e5f2] bg-white py-0 shadow-[0_18px_50px_rgba(61,72,120,0.06)] ring-0"
 >
 	<Card.Header class="px-6 pt-6">
-		<Card.Title class="flex items-center gap-2 text-[17px] font-black text-[#121826]">
-			上传参考图 <span class="text-[14px] font-semibold text-[#65708a]">（可选）</span>
-			<Tooltip.Root>
-				<Tooltip.Trigger>
-					{#snippet child({ props })}
-						<button {...props} type="button" aria-label="参考图说明">
-							<CircleHelp class="size-4 text-[#8b95aa]" />
-						</button>
-					{/snippet}
-				</Tooltip.Trigger>
-				<Tooltip.Content>参考图生成模式下必填，描述生成模式下可作为额外参考。</Tooltip.Content>
-			</Tooltip.Root>
-		</Card.Title>
+		<div class="flex items-center justify-between gap-3">
+			<Card.Title class="flex items-center gap-2 text-[17px] font-black text-[#121826]">
+				上传参考图 <span class="text-[14px] font-semibold text-[#65708a]">（可选）</span>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<button {...props} type="button" aria-label="参考图说明">
+								<CircleHelp class="size-4 text-[#8b95aa]" />
+							</button>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content>参考图生成模式下必填，描述生成模式下可作为额外参考。</Tooltip.Content>
+				</Tooltip.Root>
+			</Card.Title>
+			<Button
+				type="button"
+				variant="outline"
+				size="sm"
+				onclick={() => (pickerOpen = true)}
+				class="border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
+			>
+				<FolderOpen class="size-4" />素材库
+			</Button>
+		</div>
 	</Card.Header>
 	<Card.Content class="px-6 pb-6">
 		<div
@@ -130,8 +150,20 @@
 					<ImagePlus class="mx-auto mb-7 size-8 text-primary" />
 					{isDragging ? '松开鼠标上传图片' : '点击上传或拖拽图片到这里'}
 					<small class="mt-3 block text-[12px] font-medium text-[#8994aa]"
-						>支持 JPG、PNG、WebP，大小不超过 10MB</small
+						>支持 JPG、PNG、WebP，或从素材库选择</small
 					>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onclick={(event) => {
+							event.stopPropagation();
+							pickerOpen = true;
+						}}
+						class="mt-4 border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
+					>
+						<FolderOpen class="size-4" />从素材库选择
+					</Button>
 				</span>
 			{/if}
 			<input
@@ -142,11 +174,11 @@
 				onchange={selectFile}
 			/>
 		</div>
-		{#if file}
+		{#if file || sourceName}
 			<div
 				class="mt-3 flex items-center justify-between gap-3 text-[12px] font-medium text-[#65708a]"
 			>
-				<span class="min-w-0 truncate">{file.name}</span>
+				<span class="min-w-0 truncate">{file ? file.name : sourceName}</span>
 				<Button
 					type="button"
 					variant="ghost"
@@ -160,3 +192,11 @@
 		{/if}
 	</Card.Content>
 </Card.Root>
+
+<AssetPickerDialog
+	bind:open={pickerOpen}
+	{selectedAssetId}
+	title="选择参考图素材"
+	description="从素材库中选择一张图片作为商品图生成的参考图。"
+	onSelect={onAssetSelected}
+/>

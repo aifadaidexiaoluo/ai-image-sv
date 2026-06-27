@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { onDestroy, onMount } from 'svelte';
 	import { productStyles, promptSuggestions } from '$lib/app-catalog';
+	import type { AssetItem } from '$lib/components/app/assets/types';
 	import ModeSelector, {
 		type GenerationMode
 	} from '$lib/components/app/create-product/mode-selector.svelte';
@@ -21,10 +21,11 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import type { GenerationJob, GenerationProviderId } from '$lib/types/jobs';
 	import { cn } from '$lib/utils';
 	import { ChevronDown, CircleAlert, Coins, RefreshCw, Settings2 } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
-	import type { GenerationJob, GenerationProviderId } from '$lib/types/jobs';
+	import { onDestroy, onMount } from 'svelte';
 
 	type ProductFormValues = {
 		generationMode: GenerationMode;
@@ -34,6 +35,8 @@
 		aspectRatio: string;
 		size: string;
 		styleIds: ProductStyleId[];
+		customStyle: string;
+		quality: string;
 	};
 
 	const defaultStyleId = 'commerce-white' satisfies ProductStyleId;
@@ -101,6 +104,12 @@
 		{ value: '4', label: '4 张' }
 	];
 
+	const qualityOptions = [
+		{ value: 'standard', label: '标准清晰' },
+		{ value: 'hd', label: '高清细节' },
+		{ value: 'ultra', label: '超清精修' }
+	];
+
 	const form = createForm(() => ({
 		defaultValues: {
 			generationMode: 'prompt',
@@ -109,7 +118,9 @@
 			count: 4,
 			aspectRatio: '1:1',
 			size: '1024x1024',
-			styleIds: [defaultStyleId]
+			styleIds: [defaultStyleId],
+			customStyle: '',
+			quality: 'hd'
 		} as ProductFormValues,
 		onSubmit: async ({ value }) => {
 			await submit(value);
@@ -118,8 +129,9 @@
 
 	let file = $state<File>();
 	let preview = $state('');
+	let selectedAsset = $state<AssetItem>();
 	let error = $state('');
-	let activeJob = $state<GenerationJob>();
+	let activeJobs = $state<GenerationJob[]>([]);
 	let advancedOpen = $state(false);
 	let suggestionBatchIndex = $state(0);
 	let exampleBatchIndex = $state(0);
@@ -167,6 +179,15 @@
 		revokePreview();
 		file = selected;
 		preview = URL.createObjectURL(selected);
+		selectedAsset = undefined;
+		error = '';
+	}
+
+	function selectSourceAsset(asset: AssetItem) {
+		revokePreview();
+		file = undefined;
+		preview = '';
+		selectedAsset = asset;
 		error = '';
 	}
 
@@ -174,6 +195,7 @@
 		revokePreview();
 		file = undefined;
 		preview = '';
+		selectedAsset = undefined;
 	}
 
 	function fillPrompt(text: string) {
@@ -192,8 +214,9 @@
 	function toggleStyle(id: ProductStyleId) {
 		error = '';
 		const styleIds = form.getFieldValue('styleIds') ?? [];
+		const hasCustomStyle = Boolean(form.getFieldValue('customStyle').trim());
 		if (styleIds.includes(id)) {
-			if (styleIds.length === 1) {
+			if (styleIds.length === 1 && !hasCustomStyle) {
 				setError('至少需要保留一种商品图风格');
 				return;
 			}
@@ -204,6 +227,16 @@
 			return;
 		}
 		form.setFieldValue('styleIds', [...styleIds, id]);
+	}
+
+	function updateCustomStyle(value: string) {
+		error = '';
+		form.setFieldValue('customStyle', value);
+		if (!value.trim()) return;
+		const styleIds = form.getFieldValue('styleIds') ?? [];
+		if (styleIds.length === 1 && styleIds[0] === defaultStyleId) {
+			form.setFieldValue('styleIds', []);
+		}
 	}
 
 	function toggleAllStyles() {
@@ -243,6 +276,12 @@
 		if (typeof parameters.size === 'string') {
 			form.setFieldValue('size', parameters.size);
 		}
+		if (typeof parameters.customStyle === 'string') {
+			form.setFieldValue('customStyle', parameters.customStyle);
+		}
+		if (typeof parameters.quality === 'string') {
+			form.setFieldValue('quality', parameters.quality);
+		}
 		if (styleIds.length) {
 			form.setFieldValue('styleIds', styleIds);
 		}
@@ -253,12 +292,16 @@
 		const prompt = value.prompt.trim();
 		if (value.generationMode === 'prompt' && !prompt) return '请输入商品描述';
 		if (prompt.length > 300) return '商品描述不能超过 300 个字符';
-		if (value.generationMode === 'reference' && !file) return '参考图生成需要先上传一张商品图片';
-		if (!value.styleIds.length) return '至少需要选择一种商品图风格';
+		if (value.generationMode === 'reference' && !file && !selectedAsset)
+			return '参考图生成需要先上传或选择一张商品图片';
+		if (value.customStyle.trim().length > 80) return '自定义风格不能超过 80 个字符';
+		if (!value.styleIds.length && !value.customStyle.trim())
+			return '至少需要选择一种商品图风格或填写自定义风格';
 		return '';
 	}
 
 	async function uploadSource() {
+		if (selectedAsset) return selectedAsset.id;
 		if (!file) return undefined;
 		const presign = await fetch('/api/uploads/presign', {
 			method: 'POST',
@@ -299,13 +342,15 @@
 					parameters: {
 						generationMode: value.generationMode,
 						styleIds: value.styleIds,
-						size: value.size
+						customStyle: value.customStyle.trim(),
+						size: value.size,
+						quality: value.quality
 					}
 				})
 			});
 			const payload = await response.json();
 			if (!response.ok) throw new Error(payload.message);
-			activeJob = { ...payload.job, outputs: [] };
+			activeJobs = [{ ...payload.job, outputs: [] }, ...activeJobs];
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : '创建任务失败';
 		}
@@ -392,11 +437,18 @@
 						<section class="mt-8">
 							<form.Subscribe selector={(state) => state.values.styleIds}>
 								{#snippet children(styleIds)}
-									<StyleSelector
-										selectedStyleIds={styleIds}
-										onToggle={toggleStyle}
-										onToggleAll={toggleAllStyles}
-									/>
+									<form.Field name="customStyle">
+										{#snippet children(field)}
+											<StyleSelector
+												selectedStyleIds={styleIds}
+												customStyle={field.state.value}
+												onToggle={toggleStyle}
+												onToggleAll={toggleAllStyles}
+												onCustomStyleChange={updateCustomStyle}
+												onCustomStyleBlur={field.handleBlur}
+											/>
+										{/snippet}
+									</form.Field>
 								{/snippet}
 							</form.Subscribe>
 						</section>
@@ -405,7 +457,7 @@
 							<StepHeading step={4}>图片设置</StepHeading>
 
 							<div class="mt-5 rounded-2xl border border-[#e3e8f5] bg-[#f8faff] p-4">
-								<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_0.8fr_168px]">
+								<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 									<form.Field name="aspectRatio">
 										{#snippet children(field)}
 											<SettingSelect
@@ -439,11 +491,22 @@
 										{/snippet}
 									</form.Field>
 
+									<form.Field name="quality">
+										{#snippet children(field)}
+											<SettingSelect
+												label="图片清晰度"
+												value={field.state.value}
+												options={qualityOptions}
+												onChange={(value) => field.handleChange(value)}
+											/>
+										{/snippet}
+									</form.Field>
+
 									<Button
 										type="button"
 										variant="outline"
 										onclick={() => (advancedOpen = !advancedOpen)}
-										class="h-full min-h-[86px] rounded-xl border-[#dfe5f4] bg-white text-[14px] font-black text-[#30405f] shadow-[0_10px_24px_rgba(31,42,84,0.04)] hover:border-primary/40 hover:bg-white hover:text-primary md:col-span-2 xl:col-span-1"
+										class="h-full min-h-[86px] rounded-xl border-[#dfe5f4] bg-white text-[14px] font-black text-[#30405f] shadow-[0_10px_24px_rgba(31,42,84,0.04)] hover:border-primary/40 hover:bg-white hover:text-primary md:col-span-2 xl:col-span-4"
 									>
 										<Settings2 class="size-4" />
 										高级设置
@@ -511,7 +574,21 @@
 			</Card.Root>
 
 			<aside class="space-y-5">
-				<UploadCard {file} {preview} onFileSelected={setSourceFile} onClear={clearFile} />
+				<form.Subscribe selector={(state) => state.values.generationMode}>
+					{#snippet children(generationMode)}
+						{#if generationMode === 'reference'}
+							<UploadCard
+								{file}
+								preview={selectedAsset?.url ?? preview}
+								sourceName={selectedAsset?.displayName}
+								selectedAssetId={selectedAsset?.id}
+								onFileSelected={setSourceFile}
+								onAssetSelected={selectSourceAsset}
+								onClear={clearFile}
+							/>
+						{/if}
+					{/snippet}
+				</form.Subscribe>
 
 				<TipsCard
 					examples={visibleExamples}
@@ -519,8 +596,12 @@
 					onNextExamples={nextExampleBatch}
 				/>
 
-				{#if activeJob}
-					<JobCard initialJob={activeJob} />
+				{#if activeJobs.length}
+					<div class="space-y-4">
+						{#each activeJobs as job (job.id)}
+							<JobCard initialJob={job} />
+						{/each}
+					</div>
 				{:else}
 					<ResultEmpty />
 				{/if}

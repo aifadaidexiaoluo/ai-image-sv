@@ -1,6 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { deleteJobOutputAssetForUser, listJobsForUser } from '$lib/server/jobs/service';
+import {
+	deleteJobForUser,
+	deleteJobOutputAssetForUser,
+	listJobsForUser
+} from '$lib/server/jobs/service';
 import type { GenerationTool } from '$lib/server/providers';
 import type { Actions } from './$types';
 
@@ -36,6 +40,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
+	deleteJob: async ({ locals, request }) => {
+		const form = await request.formData();
+		const jobId = String(form.get('jobId') ?? '');
+
+		if (!jobId) return fail(400, { message: '缺少任务信息' });
+
+		const deleted = await deleteJobForUser(jobId, locals.user!.id);
+		if (!deleted) return fail(404, { message: '任务不存在' });
+
+		return { success: true };
+	},
 	deleteOutput: async ({ locals, request }) => {
 		const form = await request.formData();
 		const jobId = String(form.get('jobId') ?? '');
