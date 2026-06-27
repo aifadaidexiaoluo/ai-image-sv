@@ -33,7 +33,11 @@ async function loadSource(job: Job) {
 		new TextDecoder().decode(bytes.slice(0, 4)) === 'RIFF' &&
 		new TextDecoder().decode(bytes.slice(8, 12)) === 'WEBP';
 	if (!isPng && !isJpeg && !isWebp) throw new Error('UNSUPPORTED_SOURCE_IMAGE');
-	return { bytes, mimeType: asset.mimeType };
+	return {
+		bytes,
+		mimeType: asset.mimeType,
+		url: await storageProvider.presignDownload(asset.objectKey, 1800)
+	};
 }
 
 async function saveOutput(
