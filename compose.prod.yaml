@@ -21,13 +21,13 @@ services:
       <<: *app-env
       HOST: 0.0.0.0
       PORT: 3000
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.openlist.rule=Host(`ai-image-shop.circlebbs.com`)"
-        - "traefik.http.routers.openlist.tls=true"        # 保留 TLS，但不使用 certResolver
-        - "traefik.http.routers.openlist.entrypoints=websecure"
-        - "traefik.http.routers.openlist.tls.certresolver="  # 空值，禁用自动证书
-        - "traefik.http.services.openlist.loadbalancer.server.port=3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openlist.rule=Host(`ai-image-shop.circlebbs.com`)"
+      - "traefik.http.routers.openlist.tls=true"        # 保留 TLS，但不使用 certResolver
+      - "traefik.http.routers.openlist.entrypoints=websecure"
+      - "traefik.http.routers.openlist.tls.certresolver="  # 空值，禁用自动证书
+      - "traefik.http.services.openlist.loadbalancer.server.port=3000"
     depends_on:
       migrate:
         condition: service_completed_successfully
