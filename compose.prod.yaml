@@ -4,16 +4,12 @@ x-app-image: &app-image
   image: ${APP_IMAGE:-ai-image-sv:latest}
   build:
     context: .
+    dockerfile: Dockerfile
 
 x-app-env: &app-env
-  DATABASE_URL: postgres://${POSTGRES_USER:-designai}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-designai}
+  NODE_ENV: production
+  DATABASE_URL: postgres://designai:designai@postgres:5432/designai
   REDIS_URL: redis://redis:6379
-  MINIO_ENDPOINT: ${MINIO_ENDPOINT:?Set MINIO_ENDPOINT}
-  MINIO_BUCKET: ${MINIO_BUCKET:-designai}
-  MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY}
-  MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY}
-  MINIO_REGION: ${MINIO_REGION:-us-east-1}
-  MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
 
 services:
   app:
@@ -23,30 +19,25 @@ services:
       - .env
     environment:
       <<: *app-env
-      NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3000
     ports:
       - '${APP_PORT:-3000}:3000'
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
-        condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
 
   migrate:
     <<: *app-image
-    profiles:
-      - migrate
+    restart: 'no'
     env_file:
       - .env
     environment:
       <<: *app-env
-      NODE_ENV: production
     command: ['bun', 'run', 'db:migrate']
     depends_on:
       postgres:
@@ -56,13 +47,13 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-designai}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-designai}
+      POSTGRES_USER: designai
+      POSTGRES_PASSWORD: designai
+      POSTGRES_DB: designai
     volumes:
       - designai-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      test: ['CMD-SHELL', 'pg_isready -U designai -d designai']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -78,38 +69,6 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY}
-    ports:
-      - '${MINIO_API_PORT:-9000}:9000'
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'
-    volumes:
-      - designai-minio:/data
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    volumes:
-      - ./infra/minio-cors.xml:/config/minio-cors.xml:ro
-    entrypoint: >
-      /bin/sh -c "mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY} &&
-      mc mb --ignore-existing local/${MINIO_BUCKET:-designai} &&
-      mc anonymous set none local/${MINIO_BUCKET:-designai} &&
-      mc cors set local/${MINIO_BUCKET:-designai} /config/minio-cors.xml"
-
 volumes:
   designai-postgres:
   designai-redis:
-  designai-minio:
