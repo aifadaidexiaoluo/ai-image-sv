@@ -31,7 +31,7 @@ DesignAI 是一个基于 SvelteKit 2、Svelte 5、Better Auth、Drizzle、Postgr
 
 `.env.example` 默认启用 `MOCK_AI=true`，不需要外部模型密钥也能走通完整生成流程。开发环境未配置邮件网关时，验证邮箱和重置密码链接会输出到服务端控制台。
 
-MinIO 控制台默认位于 `http://localhost:9001`，账号与密码均为 `minioadmin`。生产环境必须替换凭据，并将 `MINIO_PUBLIC_ENDPOINT` 设置为浏览器可访问的 HTTPS 地址。
+MinIO 控制台默认位于 `http://localhost:9001`，账号与密码均为 `minioadmin`。生产环境必须替换凭据，并将 `MINIO_ENDPOINT` 设置为服务端和浏览器均可访问的 HTTPS 地址。
 
 ## 图片服务
 

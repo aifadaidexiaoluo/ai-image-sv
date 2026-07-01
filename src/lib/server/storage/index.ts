@@ -44,15 +44,11 @@ async function streamToBytes(stream: Readable) {
 
 class MinioStorageProvider implements StorageProvider {
 	private readonly internalEndpoint = endpointUrl(env.MINIO_ENDPOINT ?? 'http://127.0.0.1:9000');
-	private readonly publicEndpoint = endpointUrl(
-		env.MINIO_PUBLIC_ENDPOINT ?? this.internalEndpoint.toString()
-	);
 	private readonly bucket = env.MINIO_BUCKET ?? 'designai';
 	private readonly internalClient = new Client(clientOptionsFromEndpoint(this.internalEndpoint));
-	private readonly publicClient = new Client(clientOptionsFromEndpoint(this.publicEndpoint));
 
 	presignUpload(input: UploadDescriptor) {
-		return this.publicClient.presignedPutObject(
+		return this.internalClient.presignedPutObject(
 			this.bucket,
 			input.objectKey,
 			input.expiresIn ?? 900
@@ -60,7 +56,7 @@ class MinioStorageProvider implements StorageProvider {
 	}
 
 	presignDownload(objectKey: string, expiresIn = 600) {
-		return this.publicClient.presignedGetObject(this.bucket, objectKey, expiresIn);
+		return this.internalClient.presignedGetObject(this.bucket, objectKey, expiresIn);
 	}
 
 	async readObject(objectKey: string) {
