@@ -10,6 +10,7 @@ FROM deps AS builder
 WORKDIR /app
 
 COPY . .
+ENV DATABASE_URL=postgres://designai:designai@postgres:5432/designai
 RUN bun run build
 
 FROM oven/bun:1-slim AS runner
