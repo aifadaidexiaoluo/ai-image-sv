@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
+	import { validateUploadImageFile } from '$lib/image-upload';
 	import { ImagePlus, LoaderCircle } from '@lucide/svelte';
 	import AssetSelect from './asset-select.svelte';
 	import type { AssetOption, MetadataValues } from './types';
@@ -20,8 +21,6 @@
 		onUploaded: () => Promise<void>;
 	} = $props();
 
-	const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-	const maxFileBytes = 10 * 1024 * 1024;
 	const form = createForm(() => ({
 		defaultValues: {
 			displayName: '',
@@ -48,9 +47,7 @@
 	}
 
 	function validateFile(file: File) {
-		if (!allowedTypes.has(file.type)) return '仅支持 JPG、PNG 和 WebP 图片';
-		if (file.size <= 0 || file.size > maxFileBytes) return '图片大小不能超过 10 MB';
-		return '';
+		return validateUploadImageFile(file).message ?? '';
 	}
 
 	function chooseFile(file: File) {
@@ -104,13 +101,15 @@
 		let assetId = '';
 		try {
 			const dimensions = await imageDimensions(uploadFile);
+			const fileValidation = validateUploadImageFile(uploadFile);
+			if (!fileValidation.contentType) throw new Error(fileValidation.message);
 			const response = await fetch('/api/assets/presign', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
 					fileName: uploadFile.name,
 					displayName: value.displayName,
-					contentType: uploadFile.type,
+					contentType: fileValidation.contentType,
 					size: uploadFile.size,
 					width: dimensions.width || undefined,
 					height: dimensions.height || undefined,

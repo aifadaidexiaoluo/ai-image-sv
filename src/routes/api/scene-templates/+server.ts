@@ -2,12 +2,16 @@ import { json } from '@sveltejs/kit';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { sceneCategories } from '$lib/app-catalog';
+import {
+	allowedImageContentTypes,
+	extensionForImageContentType,
+	maxUploadImageBytes,
+	normalizeImageContentType
+} from '$lib/image-upload';
 import { db } from '$lib/server/db';
 import { assets, userSceneTemplates } from '$lib/server/db/schema';
 import { storageProvider } from '$lib/server/storage';
 
-const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const maxBytes = 10 * 1024 * 1024;
 const allowedCategories = new Set<string>(
 	sceneCategories.filter((item) => item.id !== 'all').map((item) => item.id)
 );
@@ -22,10 +26,13 @@ function validateTemplateInput(input: {
 	const title = input.title?.trim() ?? '';
 	if (!title || title.length > 60) return '模板标题需填写且不能超过 60 个字符';
 	if (!input.category || !allowedCategories.has(input.category)) return '请选择有效的场景分类';
-	if (!input.fileName || !input.contentType || !allowedTypes.has(input.contentType)) {
+	const contentType = normalizeImageContentType(input.fileName, input.contentType);
+	if (!input.fileName || !contentType || !allowedImageContentTypes.has(contentType)) {
 		return '仅支持 JPG、PNG 和 WebP 图片';
 	}
-	if (!input.size || input.size <= 0 || input.size > maxBytes) return '图片大小不能超过 10 MB';
+	if (!input.size || input.size <= 0 || input.size > maxUploadImageBytes) {
+		return '图片大小不能超过 10 MB';
+	}
 	return '';
 }
 
@@ -74,8 +81,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const message = validateTemplateInput(input);
 	if (message) return json({ message }, { status: 400 });
 
-	const contentType = input.contentType!;
-	const extension = contentType === 'image/jpeg' ? 'jpg' : contentType.split('/')[1];
+	const contentType = normalizeImageContentType(input.fileName, input.contentType)!;
+	const extension = extensionForImageContentType(contentType);
 	const assetId = crypto.randomUUID();
 	const objectKey = `users/${locals.user.id}/scene-templates/${assetId}.${extension}`;
 	const title = input.title!.trim();

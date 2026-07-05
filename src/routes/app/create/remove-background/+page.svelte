@@ -13,6 +13,7 @@
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import { validateUploadImageFile } from '$lib/image-upload';
 	import { CircleAlert, Coins, LoaderCircle, Sparkles } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
 	import type { GenerationJob } from '$lib/types/jobs';
@@ -23,9 +24,6 @@
 		showOriginal: boolean;
 		zoom: number;
 	};
-
-	const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-	const maxFileBytes = 10 * 1024 * 1024;
 
 	const form = createForm(() => ({
 		defaultValues: {
@@ -62,9 +60,7 @@
 	}
 
 	function validateFile(selected: File) {
-		if (!allowedTypes.has(selected.type)) return '仅支持 JPG、PNG 和 WebP 图片';
-		if (selected.size <= 0 || selected.size > maxFileBytes) return '图片大小不能超过 10 MB';
-		return '';
+		return validateUploadImageFile(selected).message ?? '';
 	}
 
 	function setSourceFile(selected: File) {
@@ -137,10 +133,16 @@
 	async function uploadSource() {
 		if (selectedAsset) return selectedAsset.id;
 		if (!file) return undefined;
+		const fileValidation = validateUploadImageFile(file);
+		if (!fileValidation.contentType) throw new Error(fileValidation.message);
 		const presign = await fetch('/api/uploads/presign', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size })
+			body: JSON.stringify({
+				fileName: file.name,
+				contentType: fileValidation.contentType,
+				size: file.size
+			})
 		});
 		const descriptor = await presign.json();
 		if (!presign.ok) throw new Error(descriptor.message);

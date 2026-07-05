@@ -1,10 +1,11 @@
 import { assetColorOptions, assetStyleOptions } from '$lib/app-catalog';
+import { allowedImageContentTypes, maxUploadImageBytes } from '$lib/image-upload';
 
 const allowedStyles = new Set<string>(assetStyleOptions.map((item) => item.value));
 const allowedColors = new Set<string>(assetColorOptions.map((item) => item.value));
 
-export const assetUploadAllowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-export const assetUploadMaxBytes = 10 * 1024 * 1024;
+export const assetUploadAllowedTypes = allowedImageContentTypes;
+export const assetUploadMaxBytes = maxUploadImageBytes;
 export const assetMaxTags = 10;
 
 export function normalizeAssetName(input: unknown, fallback: string) {

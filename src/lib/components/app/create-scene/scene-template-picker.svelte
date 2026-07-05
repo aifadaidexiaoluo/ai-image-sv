@@ -9,6 +9,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { validateUploadImageFile } from '$lib/image-upload';
 	import { Check, CircleAlert, ImagePlus, LoaderCircle, Sparkles, Upload, X } from '@lucide/svelte';
 	import { createForm } from '@tanstack/svelte-form';
 	import { cn } from '$lib/utils';
@@ -60,8 +61,6 @@
 	} = $props();
 
 	const realCategories = sceneCategories.filter((item) => item.id !== 'all');
-	const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-	const maxFileBytes = 10 * 1024 * 1024;
 	const uploadForm = createForm(() => ({
 		defaultValues: {
 			title: '',
@@ -126,9 +125,7 @@
 	}
 
 	function validateTemplateFile(selected: File) {
-		if (!allowedTypes.has(selected.type)) return '仅支持 JPG、PNG 和 WebP 图片';
-		if (selected.size <= 0 || selected.size > maxFileBytes) return '图片大小不能超过 10 MB';
-		return '';
+		return validateUploadImageFile(selected).message ?? '';
 	}
 
 	function setTemplateFile(selected: File) {

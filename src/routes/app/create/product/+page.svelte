@@ -21,6 +21,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Collapsible from '$lib/components/ui/collapsible';
+	import { validateUploadImageFile } from '$lib/image-upload';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -43,8 +44,6 @@
 	};
 
 	const defaultStyleId = 'commerce-white' satisfies ProductStyleId;
-	const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-	const maxFileBytes = 10 * 1024 * 1024;
 	const maxReferenceImages = 6;
 
 	const suggestionBatches = [
@@ -169,9 +168,7 @@
 	}
 
 	function validateFile(selected: File) {
-		if (!allowedTypes.has(selected.type)) return '仅支持 JPG、PNG 和 WebP 图片';
-		if (selected.size <= 0 || selected.size > maxFileBytes) return '图片大小不能超过 10 MB';
-		return '';
+		return validateUploadImageFile(selected).message ?? '';
 	}
 
 	function appendSourceFiles(selectedFiles: File[]) {
@@ -338,10 +335,16 @@
 		if (item.assetId) return item.assetId;
 		const file = item.file;
 		if (!file) return undefined;
+		const fileValidation = validateUploadImageFile(file);
+		if (!fileValidation.contentType) throw new Error(fileValidation.message);
 		const presign = await fetch('/api/uploads/presign', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size })
+			body: JSON.stringify({
+				fileName: file.name,
+				contentType: fileValidation.contentType,
+				size: file.size
+			})
 		});
 		const descriptor = await presign.json();
 		if (!presign.ok) throw new Error(descriptor.message);

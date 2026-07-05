@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { ImagePlus, Sparkles, UploadCloud } from '@lucide/svelte';
 	import { refreshAccountData } from '$lib/account-refresh';
+	import { validateUploadImageFile } from '$lib/image-upload';
 	import type { GenerationJob, GenerationProviderId, GenerationToolId } from '$lib/types/jobs';
 	import JobCard from './job-card.svelte';
 
@@ -29,16 +30,28 @@
 	function selectFile(event: Event) {
 		const selected = (event.currentTarget as HTMLInputElement).files?.[0];
 		if (!selected) return;
+		const validation = validateUploadImageFile(selected);
+		if (validation.message) {
+			error = validation.message;
+			return;
+		}
 		file = selected;
 		preview = URL.createObjectURL(selected);
+		error = '';
 	}
 
 	async function uploadSource() {
 		if (!file) return undefined;
+		const fileValidation = validateUploadImageFile(file);
+		if (!fileValidation.contentType) throw new Error(fileValidation.message);
 		const presign = await fetch('/api/uploads/presign', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size })
+			body: JSON.stringify({
+				fileName: file.name,
+				contentType: fileValidation.contentType,
+				size: file.size
+			})
 		});
 		const descriptor = await presign.json();
 		if (!presign.ok) throw new Error(descriptor.message);

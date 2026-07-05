@@ -9,6 +9,7 @@ import {
 	normalizeAssetTags,
 	normalizePositiveDimension
 } from '$lib/server/assets/metadata';
+import { extensionForImageContentType, normalizeImageContentType } from '$lib/image-upload';
 import { db } from '$lib/server/db';
 import { assets, assetTags } from '$lib/server/db/schema';
 import { storageProvider } from '$lib/server/storage';
@@ -28,14 +29,15 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		tags?: string | string[];
 	};
 
-	if (!input.fileName || !input.contentType || !assetUploadAllowedTypes.has(input.contentType)) {
+	const contentType = normalizeImageContentType(input.fileName, input.contentType);
+	if (!input.fileName || !contentType || !assetUploadAllowedTypes.has(contentType)) {
 		return json({ message: '仅支持 JPG、PNG 和 WebP 图片' }, { status: 400 });
 	}
 	if (!input.size || input.size <= 0 || input.size > assetUploadMaxBytes) {
 		return json({ message: '图片大小不能超过 10 MB' }, { status: 400 });
 	}
 
-	const extension = input.contentType === 'image/jpeg' ? 'jpg' : input.contentType.split('/')[1];
+	const extension = extensionForImageContentType(contentType);
 	const id = crypto.randomUUID();
 	const objectKey = `users/${locals.user.id}/assets/${id}.${extension}`;
 	const fileName = input.fileName.slice(0, 180);
@@ -51,7 +53,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				objectKey,
 				fileName,
 				displayName: normalizeAssetName(input.displayName, fileName),
-				mimeType: input.contentType!,
+				mimeType: contentType,
 				sizeBytes: input.size!,
 				width: normalizePositiveDimension(input.width),
 				height: normalizePositiveDimension(input.height),
@@ -77,8 +79,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		{
 			assetId: asset.id,
 			method: 'PUT',
-			url: await storageProvider.presignUpload({ objectKey, contentType: input.contentType }),
-			headers: { 'content-type': input.contentType },
+			url: await storageProvider.presignUpload({ objectKey, contentType }),
+			headers: { 'content-type': contentType },
 			expiresIn: 900
 		},
 		{ status: 201 }

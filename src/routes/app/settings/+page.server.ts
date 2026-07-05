@@ -194,7 +194,7 @@ export const actions: Actions = {
 					size: avatar.size,
 					bytes
 				});
-				if (!detected || avatar.type !== detected.contentType) {
+				if (!detected) {
 					return fail(400, {
 						kind: 'profile',
 						message: '头像仅支持 JPG、PNG 和 WebP 图片',

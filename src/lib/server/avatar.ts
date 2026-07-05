@@ -1,3 +1,5 @@
+import { normalizeImageContentType } from '$lib/image-upload';
+
 export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 export interface AvatarFileType {
@@ -35,5 +37,7 @@ export function detectAvatarType(bytes: Uint8Array): AvatarFileType | null {
 export function validateAvatar(input: { declaredType: string; size: number; bytes: Uint8Array }) {
 	if (input.size <= 0 || input.size > MAX_AVATAR_BYTES) return null;
 	const detected = detectAvatarType(input.bytes);
-	return detected?.contentType === input.declaredType ? detected : null;
+	const declaredType = normalizeImageContentType(undefined, input.declaredType);
+	if (!declaredType) return detected;
+	return detected?.contentType === declaredType ? detected : null;
 }
