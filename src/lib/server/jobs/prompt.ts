@@ -50,6 +50,9 @@ export function buildGenerationPrompt(input: {
 		const quality = qualityLabels[String(parameters.quality ?? '')];
 		if (quality) parts.push(`图片清晰度：${quality}`);
 		if (parameters.generationMode === 'reference') parts.push('参考上传图片的商品主体与材质特征');
+		if (Array.isArray(parameters.referenceAssetIds) && parameters.referenceAssetIds.length > 1) {
+			parts.push('综合多张参考图的商品特征与视觉风格');
+		}
 	}
 
 	if (input.tool === 'scene') {

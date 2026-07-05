@@ -7,22 +7,28 @@
 	import AssetPickerDialog from '$lib/components/app/assets/asset-picker-dialog.svelte';
 	import type { AssetItem } from '$lib/components/app/assets/types';
 
-	let {
-		file,
-		preview,
-		sourceName,
-		selectedAssetId,
-		onFileSelected,
-		onAssetSelected,
-		onClear
-	}: {
-		file?: File;
+	export type ReferenceImageItem = {
+		key: string;
+		name: string;
 		preview: string;
-		sourceName?: string;
-		selectedAssetId?: string;
-		onFileSelected: (file: File) => void;
+		file?: File;
+		assetId?: string;
+	};
+
+	let {
+		items,
+		selectedAssetIds,
+		onFilesSelected,
+		onAssetSelected,
+		onRemove,
+		onClearAll
+	}: {
+		items: ReferenceImageItem[];
+		selectedAssetIds: string[];
+		onFilesSelected: (files: File[]) => void;
 		onAssetSelected: (asset: AssetItem) => void;
-		onClear: () => void;
+		onRemove: (key: string) => void;
+		onClearAll: () => void;
 	} = $props();
 
 	let fileInput = $state<HTMLInputElement>();
@@ -34,20 +40,21 @@
 	}
 
 	function selectFile(event: Event) {
-		const selected = (event.currentTarget as HTMLInputElement).files?.[0];
-		if (selected) onFileSelected(selected);
+		const selected = Array.from((event.currentTarget as HTMLInputElement).files ?? []);
+		if (selected.length) onFilesSelected(selected);
+		if (fileInput) fileInput.value = '';
 	}
 
-	function clearFile() {
-		onClear();
+	function clearFiles() {
+		onClearAll();
 		if (fileInput) fileInput.value = '';
 	}
 
 	function handleDrop(event: DragEvent) {
 		event.preventDefault();
 		isDragging = false;
-		const selected = event.dataTransfer?.files?.[0];
-		if (selected) onFileSelected(selected);
+		const selected = Array.from(event.dataTransfer?.files ?? []);
+		if (selected.length) onFilesSelected(selected);
 	}
 
 	function handleDragOver(event: DragEvent) {
@@ -105,65 +112,89 @@
 					openFilePicker();
 				}
 			}}
-			onclick={() => {
-				if (!preview) openFilePicker();
-			}}
+			onclick={openFilePicker}
 			class={cn(
-				'mt-4 grid min-h-46 place-items-center overflow-hidden rounded-[10px] border border-dashed bg-[#fbfaff] text-center transition',
+				'mt-4 min-h-46 overflow-hidden rounded-[10px] border border-dashed bg-[#fbfaff] text-center transition',
 				isDragging ? 'border-primary bg-primary/5' : 'border-primary/45 hover:border-primary'
 			)}
 		>
-			{#if preview}
-				<div class="relative size-full min-h-46">
-					<img src={preview} alt="上传预览" class="size-full object-contain" />
-					<div class="absolute right-3 top-3 flex gap-2">
+			{#if items.length}
+				<div class="w-full p-3">
+					<div class="grid grid-cols-2 gap-3">
+						{#each items as item (item.key)}
+							<div class="group relative aspect-square overflow-hidden rounded-lg bg-white">
+								<img src={item.preview} alt={item.name} class="size-full object-cover" />
+								<Button
+									type="button"
+									size="icon-sm"
+									variant="secondary"
+									onclick={(event) => {
+										event.stopPropagation();
+										onRemove(item.key);
+									}}
+									aria-label="移除图片"
+									class="absolute right-2 top-2 bg-white/90 text-red-500 opacity-100 shadow-sm hover:text-red-600 md:opacity-0 md:group-hover:opacity-100"
+								>
+									<Trash2 class="size-4" />
+								</Button>
+								<div
+									class="absolute inset-x-0 bottom-0 truncate bg-black/45 px-2 py-1 text-left text-[11px] font-medium text-white"
+								>
+									{item.name}
+								</div>
+							</div>
+						{/each}
+					</div>
+					<div class="mt-3 flex flex-wrap items-center justify-center gap-2">
 						<Button
 							type="button"
-							size="icon-sm"
-							variant="secondary"
+							size="sm"
+							variant="outline"
 							onclick={(event) => {
 								event.stopPropagation();
 								openFilePicker();
 							}}
-							aria-label="替换图片"
-							class="bg-white/90 shadow-sm"
+							class="border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
 						>
-							<UploadCloud class="size-4" />
+							<UploadCloud class="size-4" />继续上传
 						</Button>
 						<Button
 							type="button"
-							size="icon-sm"
-							variant="secondary"
+							size="sm"
+							variant="outline"
 							onclick={(event) => {
 								event.stopPropagation();
-								clearFile();
+								pickerOpen = true;
 							}}
-							aria-label="移除图片"
-							class="bg-white/90 text-red-500 shadow-sm hover:text-red-600"
+							class="border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
 						>
-							<Trash2 class="size-4" />
+							<FolderOpen class="size-4" />素材库
 						</Button>
 					</div>
 				</div>
 			{:else}
-				<span class="px-8 text-[14px] font-semibold text-[#26324a]">
-					<ImagePlus class="mx-auto mb-7 size-8 text-primary" />
-					{isDragging ? '松开鼠标上传图片' : '点击上传或拖拽图片到这里'}
-					<small class="mt-3 block text-[12px] font-medium text-[#8994aa]"
-						>支持 JPG、PNG、WebP，或从素材库选择</small
-					>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onclick={(event) => {
-							event.stopPropagation();
-							pickerOpen = true;
-						}}
-						class="mt-4 border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
-					>
-						<FolderOpen class="size-4" />从素材库选择
-					</Button>
+				<span
+					class="grid min-h-46 place-items-center px-8 text-[14px] font-semibold text-[#26324a]"
+				>
+					<span>
+						<ImagePlus class="mx-auto mb-7 size-8 text-primary" />
+						{isDragging ? '松开鼠标上传图片' : '点击上传或拖拽多张图片到这里'}
+						<small class="mt-3 block text-[12px] font-medium text-[#8994aa]"
+							>支持 JPG、PNG、WebP，可一次选择多张，或从素材库选择</small
+						>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onclick={(event) => {
+								event.stopPropagation();
+								pickerOpen = true;
+							}}
+							class="mt-4 border-primary/35 text-primary hover:bg-primary/5 hover:text-primary"
+						>
+							<FolderOpen class="size-4" />从素材库选择
+						</Button>
+					</span>
 				</span>
 			{/if}
 			<input
@@ -171,22 +202,23 @@
 				class="sr-only"
 				type="file"
 				accept="image/jpeg,image/png,image/webp"
+				multiple
 				onchange={selectFile}
 			/>
 		</div>
-		{#if file || sourceName}
+		{#if items.length}
 			<div
 				class="mt-3 flex items-center justify-between gap-3 text-[12px] font-medium text-[#65708a]"
 			>
-				<span class="min-w-0 truncate">{file ? file.name : sourceName}</span>
+				<span class="min-w-0 truncate">已选择 {items.length} 张参考图</span>
 				<Button
 					type="button"
 					variant="ghost"
 					size="xs"
-					onclick={clearFile}
+					onclick={clearFiles}
 					class="shrink-0 text-[#65708a] hover:text-red-600"
 				>
-					<X class="size-3" />移除
+					<X class="size-3" />全部移除
 				</Button>
 			</div>
 		{/if}
@@ -195,8 +227,8 @@
 
 <AssetPickerDialog
 	bind:open={pickerOpen}
-	{selectedAssetId}
+	selectedAssetId={selectedAssetIds[0]}
 	title="选择参考图素材"
-	description="从素材库中选择一张图片作为商品图生成的参考图。"
+	description="从素材库中选择图片作为商品图生成的参考图，可重复打开继续添加。"
 	onSelect={onAssetSelected}
 />

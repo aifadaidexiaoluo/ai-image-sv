@@ -22,7 +22,22 @@ function formatJobError(error: unknown) {
 
 async function loadSource(job: Job) {
 	if (!job.sourceAssetId) return undefined;
-	const asset = await db.query.assets.findFirst({ where: eq(assets.id, job.sourceAssetId) });
+	return loadAssetSource(job.sourceAssetId);
+}
+
+function referenceAssetIds(parameters: Record<string, unknown>) {
+	if (!Array.isArray(parameters.referenceAssetIds)) return [];
+	return [
+		...new Set(
+			parameters.referenceAssetIds.filter(
+				(item): item is string => typeof item === 'string' && Boolean(item)
+			)
+		)
+	];
+}
+
+async function loadAssetSource(assetId: string) {
+	const asset = await db.query.assets.findFirst({ where: eq(assets.id, assetId) });
 	if (!asset) throw new Error('SOURCE_ASSET_NOT_FOUND');
 	const object = await storageProvider.readObject(asset.objectKey);
 	const bytes = object.bytes;
@@ -38,6 +53,15 @@ async function loadSource(job: Job) {
 		mimeType: asset.mimeType,
 		url: await storageProvider.presignDownload(asset.objectKey, 1800)
 	};
+}
+
+async function loadSources(job: Job) {
+	const assetIds = referenceAssetIds(job.parameters);
+	if (!assetIds.length) {
+		const source = await loadSource(job);
+		return source ? [source] : [];
+	}
+	return Promise.all(assetIds.map((assetId) => loadAssetSource(assetId)));
 }
 
 async function saveOutput(
@@ -96,7 +120,8 @@ export async function processJob(job: Job) {
 			progress: 5,
 			message: '正在校验任务参数'
 		});
-		const source = await loadSource(job);
+		const sources = await loadSources(job);
+		const source = sources[0];
 		if ((job.tool === 'scene' || job.tool === 'remove-background') && !source) {
 			throw new Error('SOURCE_IMAGE_REQUIRED');
 		}
@@ -128,7 +153,8 @@ export async function processJob(job: Job) {
 						}),
 						count: job.totalCount,
 						aspectRatio: String(job.parameters.aspectRatio ?? '1:1'),
-						source
+						source,
+						sources
 					});
 
 		await updateJobProgress(job.id, {

@@ -34,9 +34,14 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
 	}
 
 	private async submitGptsApiJob(request: GenerationRequest): Promise<string[]> {
-		if (request.source && !request.source.url) throw new Error('OPENAI_SOURCE_URL_REQUIRED');
+		const sources = request.sources?.length
+			? request.sources
+			: request.source
+				? [request.source]
+				: [];
+		if (sources.some((source) => !source.url)) throw new Error('OPENAI_SOURCE_URL_REQUIRED');
 		const response = await fetch(
-			`${GPTSAPI_BASE_URL}/openai/gpt-image-2/${request.source ? 'image-edit' : 'text-to-image'}`,
+			`${GPTSAPI_BASE_URL}/openai/gpt-image-2/${sources.length ? 'image-edit' : 'text-to-image'}`,
 			{
 				method: 'POST',
 				headers: {
@@ -47,9 +52,9 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
 					prompt: request.prompt,
 					aspect_ratio: this.toGptsApiAspectRatio(request.aspectRatio),
 					resolution: this.toGptsApiResolution(request),
-					...(request.source
+					...(sources.length
 						? {
-								input_urls: [request.source.url]
+								input_urls: sources.map((source) => source.url)
 							}
 						: {})
 				})
@@ -107,7 +112,7 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
 	private toGptsApiResolution(request: GenerationRequest) {
 		const resolution = env.OPENAI_IMAGE_RESOLUTION;
 		const normalized = resolution === '2K' || resolution === '4K' ? resolution : '1K';
-		if (!request.source) return normalized;
+		if (!request.source && !request.sources?.length) return normalized;
 		const aspectRatio = this.toGptsApiAspectRatio(request.aspectRatio);
 		if (aspectRatio === 'auto') return '1K';
 		if (aspectRatio === '1:1' && normalized === '4K') return '2K';

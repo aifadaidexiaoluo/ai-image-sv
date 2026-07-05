@@ -7,6 +7,7 @@ export interface GenerationRequest {
 	count: number;
 	aspectRatio: string;
 	source?: { bytes: Uint8Array; mimeType: string; url?: string };
+	sources?: Array<{ bytes: Uint8Array; mimeType: string; url?: string }>;
 }
 
 export interface GeneratedImage {

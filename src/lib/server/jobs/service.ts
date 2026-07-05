@@ -32,17 +32,32 @@ function positiveInteger(value: unknown, fallback: number) {
 	return Number.isFinite(number) && number > 0 ? Math.floor(number) : fallback;
 }
 
+function uniqueStringArray(value: unknown) {
+	if (!Array.isArray(value)) return [];
+	return [
+		...new Set(value.filter((item): item is string => typeof item === 'string' && Boolean(item)))
+	];
+}
+
 export async function createJob(userId: string, input: CreateJobInput) {
 	await ensureWallet(userId);
-	if (input.sourceAssetId) {
-		const source = await db.query.assets.findFirst({
+	const referenceAssetIds = uniqueStringArray(input.parameters?.referenceAssetIds);
+	const sourceAssetIds = [
+		...new Set(
+			[input.sourceAssetId, ...referenceAssetIds].filter(
+				(item): item is string => typeof item === 'string' && Boolean(item)
+			)
+		)
+	];
+	if (sourceAssetIds.length) {
+		const sourceRows = await db.query.assets.findMany({
 			where: and(
-				eq(assets.id, input.sourceAssetId),
+				inArray(assets.id, sourceAssetIds),
 				eq(assets.userId, userId),
 				isNull(assets.deletedAt)
 			)
 		});
-		if (!source) throw new Error('SOURCE_ASSET_NOT_FOUND');
+		if (sourceRows.length !== sourceAssetIds.length) throw new Error('SOURCE_ASSET_NOT_FOUND');
 	}
 	const { count: totalCount, credits: reservedCredits } = calculateReservedCredits(
 		input.tool,

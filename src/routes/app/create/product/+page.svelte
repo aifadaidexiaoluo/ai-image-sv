@@ -13,7 +13,9 @@
 		type ProductStyleId
 	} from '$lib/components/app/create-product/style-selector.svelte';
 	import TipsCard from '$lib/components/app/create-product/tips-card.svelte';
-	import UploadCard from '$lib/components/app/create-product/upload-card.svelte';
+	import UploadCard, {
+		type ReferenceImageItem
+	} from '$lib/components/app/create-product/upload-card.svelte';
 	import JobCard from '$lib/components/app/job-card.svelte';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -43,6 +45,7 @@
 	const defaultStyleId = 'commerce-white' satisfies ProductStyleId;
 	const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 	const maxFileBytes = 10 * 1024 * 1024;
+	const maxReferenceImages = 6;
 
 	const suggestionBatches = [
 		promptSuggestions,
@@ -128,9 +131,7 @@
 		}
 	}));
 
-	let file = $state<File>();
-	let preview = $state('');
-	let selectedAsset = $state<AssetItem>();
+	let referenceImages = $state<ReferenceImageItem[]>([]);
 	let error = $state('');
 	let activeJobs = $state<GenerationJob[]>([]);
 	let advancedOpen = $state(false);
@@ -153,7 +154,9 @@
 	});
 
 	function revokePreview() {
-		if (preview) URL.revokeObjectURL(preview);
+		for (const item of referenceImages) {
+			if (item.file) URL.revokeObjectURL(item.preview);
+		}
 	}
 
 	function setError(message: string) {
@@ -171,32 +174,62 @@
 		return '';
 	}
 
-	function setSourceFile(selected: File) {
-		const message = validateFile(selected);
-		if (message) {
-			setError(message);
+	function appendSourceFiles(selectedFiles: File[]) {
+		if (referenceImages.length + selectedFiles.length > maxReferenceImages) {
+			setError(`最多可上传 ${maxReferenceImages} 张参考图`);
 			return;
 		}
-		revokePreview();
-		file = selected;
-		preview = URL.createObjectURL(selected);
-		selectedAsset = undefined;
+		const nextItems: ReferenceImageItem[] = [];
+		for (const selected of selectedFiles) {
+			const message = validateFile(selected);
+			if (message) {
+				setError(`${selected.name}：${message}`);
+				for (const item of nextItems) URL.revokeObjectURL(item.preview);
+				return;
+			}
+			nextItems.push({
+				key: `file-${crypto.randomUUID()}`,
+				name: selected.name,
+				preview: URL.createObjectURL(selected),
+				file: selected
+			});
+		}
+		referenceImages = [...referenceImages, ...nextItems];
 		error = '';
 	}
 
-	function selectSourceAsset(asset: AssetItem) {
-		revokePreview();
-		file = undefined;
-		preview = '';
-		selectedAsset = asset;
+	function appendSourceAsset(asset: AssetItem) {
+		if (referenceImages.some((item) => item.assetId === asset.id)) {
+			error = '';
+			return;
+		}
+		if (referenceImages.length >= maxReferenceImages) {
+			setError(`最多可选择 ${maxReferenceImages} 张参考图`);
+			return;
+		}
+		referenceImages = [
+			...referenceImages,
+			{
+				key: `asset-${asset.id}`,
+				name: asset.displayName,
+				preview: asset.url,
+				assetId: asset.id
+			}
+		];
 		error = '';
 	}
 
-	function clearFile() {
+	function removeReferenceImage(key: string) {
+		const item = referenceImages.find((candidate) => candidate.key === key);
+		if (item?.file) URL.revokeObjectURL(item.preview);
+		referenceImages = referenceImages.filter((candidate) => candidate.key !== key);
+		error = '';
+	}
+
+	function clearReferenceImages() {
 		revokePreview();
-		file = undefined;
-		preview = '';
-		selectedAsset = undefined;
+		referenceImages = [];
+		error = '';
 	}
 
 	function fillPrompt(text: string) {
@@ -293,16 +326,17 @@
 		const prompt = value.prompt.trim();
 		if (value.generationMode === 'prompt' && !prompt) return '请输入商品描述';
 		if (prompt.length > 300) return '商品描述不能超过 300 个字符';
-		if (value.generationMode === 'reference' && !file && !selectedAsset)
-			return '参考图生成需要先上传或选择一张商品图片';
+		if (value.generationMode === 'reference' && !referenceImages.length)
+			return '参考图生成需要先上传或选择商品图片';
 		if (value.customStyle.trim().length > 80) return '自定义风格不能超过 80 个字符';
 		if (!value.styleIds.length && !value.customStyle.trim())
 			return '至少需要选择一种商品图风格或填写自定义风格';
 		return '';
 	}
 
-	async function uploadSource() {
-		if (selectedAsset) return selectedAsset.id;
+	async function uploadReferenceItem(item: ReferenceImageItem) {
+		if (item.assetId) return item.assetId;
+		const file = item.file;
 		if (!file) return undefined;
 		const presign = await fetch('/api/uploads/presign', {
 			method: 'POST',
@@ -320,6 +354,13 @@
 		return descriptor.assetId as string;
 	}
 
+	async function uploadSources() {
+		const assetIds = (
+			await Promise.all(referenceImages.map((item) => uploadReferenceItem(item)))
+		).filter((id): id is string => Boolean(id));
+		return assetIds;
+	}
+
 	async function submit(value: ProductFormValues) {
 		error = '';
 		const validationError = validateSubmission(value);
@@ -329,7 +370,7 @@
 		}
 
 		try {
-			const sourceAssetId = await uploadSource();
+			const sourceAssetIds = await uploadSources();
 			const response = await fetch('/api/jobs', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
@@ -339,9 +380,10 @@
 					prompt: value.prompt.trim(),
 					count: value.count,
 					aspectRatio: value.aspectRatio,
-					sourceAssetId,
+					sourceAssetId: sourceAssetIds[0],
 					parameters: {
 						generationMode: value.generationMode,
+						referenceAssetIds: sourceAssetIds,
 						styleIds: value.styleIds,
 						customStyle: value.customStyle.trim(),
 						size: value.size,
@@ -580,13 +622,14 @@
 					{#snippet children(generationMode)}
 						{#if generationMode === 'reference'}
 							<UploadCard
-								{file}
-								preview={selectedAsset?.url ?? preview}
-								sourceName={selectedAsset?.displayName}
-								selectedAssetId={selectedAsset?.id}
-								onFileSelected={setSourceFile}
-								onAssetSelected={selectSourceAsset}
-								onClear={clearFile}
+								items={referenceImages}
+								selectedAssetIds={referenceImages
+									.map((item) => item.assetId)
+									.filter((id): id is string => Boolean(id))}
+								onFilesSelected={appendSourceFiles}
+								onAssetSelected={appendSourceAsset}
+								onRemove={removeReferenceImage}
+								onClearAll={clearReferenceImages}
 							/>
 						{/if}
 					{/snippet}
