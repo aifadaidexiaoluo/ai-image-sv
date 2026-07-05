@@ -1,30 +1,17 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { ArrowRight, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { ArrowRight } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
+	import * as Carousel from '$lib/components/ui/carousel';
 	import { categories, templates, type TemplateCategory } from './home-content';
 
 	let activeCategory = $state<TemplateCategory>('all');
-	let offset = $state(0);
 	let filteredItems = $derived(
 		templates.filter((item) => activeCategory === 'all' || item.category === activeCategory)
 	);
-	let visibleItems = $derived.by(() => {
-		const count = Math.min(5, filteredItems.length);
-		return Array.from(
-			{ length: count },
-			(_, index) => filteredItems[(offset + index) % filteredItems.length]
-		);
-	});
 
 	function selectCategory(category: TemplateCategory) {
 		activeCategory = category;
-		offset = 0;
-	}
-
-	function move(direction: number) {
-		if (!filteredItems.length) return;
-		offset = (offset + direction + filteredItems.length) % filteredItems.length;
 	}
 </script>
 
@@ -58,39 +45,39 @@
 		</div>
 
 		<div class="relative mt-5">
-			<div class="grid min-h-[320px] grid-cols-2 gap-4 lg:grid-cols-5">
-				{#each visibleItems as item (item.id)}
-					<article
-						class="group overflow-hidden rounded-2xl border border-[#ebe9f4] bg-white shadow-[0_10px_35px_rgba(69,53,140,.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(69,53,140,.12)]"
-					>
-						<div class="aspect-[1/1.05] overflow-hidden">
-							<img
-								src={item.image}
-								alt={item.title}
-								class="size-full object-cover transition duration-500 group-hover:scale-105"
-							/>
-						</div>
-						<div class="p-4">
-							<h3 class="text-[15px] font-semibold text-[#202638]">{item.title}</h3>
-							<p class="mt-1.5 text-xs text-[#858c9d]">{item.description}</p>
-						</div>
-					</article>
-				{/each}
-			</div>
-			<button
-				type="button"
-				aria-label="上一个模板"
-				onclick={() => move(-1)}
-				class="absolute top-1/2 -left-5 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-[#e7e3f7] bg-white text-[#60687c] shadow-lg transition hover:text-primary"
-				><ChevronLeft class="size-5" /></button
-			>
-			<button
-				type="button"
-				aria-label="下一个模板"
-				onclick={() => move(1)}
-				class="absolute top-1/2 -right-5 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-[#e7e3f7] bg-white text-[#60687c] shadow-lg transition hover:text-primary"
-				><ChevronRight class="size-5" /></button
-			>
+			{#key activeCategory}
+				<Carousel.Root opts={{ align: 'start', loop: true }} class="px-0 sm:px-6">
+					<Carousel.Content class="-ms-4 min-h-80">
+						{#each filteredItems as item (item.id)}
+							<Carousel.Item class="basis-1/2 md:basis-1/3 lg:basis-1/5">
+								<article
+									class="group h-full overflow-hidden rounded-2xl border border-[#ebe9f4] bg-white shadow-[0_10px_35px_rgba(69,53,140,.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(69,53,140,.12)]"
+								>
+									<div class="aspect-[1/1.05] overflow-hidden">
+										<img
+											src={item.image}
+											alt={item.title}
+											class="size-full object-cover transition duration-500 group-hover:scale-105"
+										/>
+									</div>
+									<div class="p-4">
+										<h3 class="text-[15px] font-semibold text-[#202638]">{item.title}</h3>
+										<p class="mt-1.5 text-xs text-[#858c9d]">{item.description}</p>
+									</div>
+								</article>
+							</Carousel.Item>
+						{/each}
+					</Carousel.Content>
+					<Carousel.Previous
+						aria-label="上一个模板"
+						class="-left-5 border-[#e7e3f7] size-10 bg-white text-[#60687c] shadow-lg transition hover:text-primary disabled:opacity-40 sm:left-0"
+					/>
+					<Carousel.Next
+						aria-label="下一个模板"
+						class="-right-5 border-[#e7e3f7] size-10 bg-white text-[#60687c] shadow-lg transition hover:text-primary disabled:opacity-40 sm:right-0"
+					/>
+				</Carousel.Root>
+			{/key}
 		</div>
 	</div>
 </section>

@@ -45,7 +45,7 @@
 		carouselState.api?.scrollNext();
 	}
 
-	function scrollTo(index: number, jump?: boolean) {
+	function scrollTo(index: number, jump: boolean | undefined = undefined) {
 		carouselState.api?.scrollTo(index, jump);
 	}
 
