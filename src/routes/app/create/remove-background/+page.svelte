@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { refreshAccountData } from '$lib/account-refresh';
 	import { onDestroy, onMount } from 'svelte';
 	import BackgroundPreviewPanel from '$lib/components/app/create-remove-background/background-preview-panel.svelte';
 	import ResultEmpty from '$lib/components/app/create-remove-background/result-empty.svelte';
@@ -177,6 +178,7 @@
 			const payload = await response.json();
 			if (!response.ok) throw new Error(payload.message);
 			activeJobs = [{ ...payload.job, outputs: [] }, ...activeJobs];
+			await refreshAccountData();
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : '创建任务失败';
 		}

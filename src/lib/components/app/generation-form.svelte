@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { ImagePlus, Sparkles, UploadCloud } from '@lucide/svelte';
+	import { refreshAccountData } from '$lib/account-refresh';
 	import type { GenerationJob, GenerationProviderId, GenerationToolId } from '$lib/types/jobs';
 	import JobCard from './job-card.svelte';
 
@@ -68,6 +69,7 @@
 			const payload = await response.json();
 			if (!response.ok) throw new Error(payload.message);
 			activeJob = { ...payload.job, outputs: [] };
+			await refreshAccountData();
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : '创建任务失败';
 		} finally {

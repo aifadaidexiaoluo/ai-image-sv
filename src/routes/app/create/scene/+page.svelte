@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { refreshAccountData } from '$lib/account-refresh';
 	import { sceneCategories, sceneTemplates } from '$lib/app-catalog';
 	import ResultEmpty from '$lib/components/app/create-product/result-empty.svelte';
 	import type { ProductPosition } from '$lib/components/app/create-scene/position-grid.svelte';
@@ -290,6 +291,7 @@
 		category = payload.template.category as SceneCategoryId;
 		form.setFieldValue('selectedSceneId', `user:${payload.template.id}`);
 		error = '';
+		await refreshAccountData();
 	}
 
 	async function generateSceneTemplate(input: { title: string; category: string; prompt: string }) {
@@ -346,6 +348,7 @@
 			const payload = await response.json();
 			if (!response.ok) throw new Error(payload.message);
 			activeJobs = [{ ...payload.job, outputs: [] }, ...activeJobs];
+			await refreshAccountData();
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : '创建任务失败';
 		}

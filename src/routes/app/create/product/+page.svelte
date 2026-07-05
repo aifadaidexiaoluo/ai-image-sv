@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { refreshAccountData } from '$lib/account-refresh';
 	import { productStyles, promptSuggestions } from '$lib/app-catalog';
 	import type { AssetItem } from '$lib/components/app/assets/types';
 	import ModeSelector, {
@@ -351,6 +352,7 @@
 			const payload = await response.json();
 			if (!response.ok) throw new Error(payload.message);
 			activeJobs = [{ ...payload.job, outputs: [] }, ...activeJobs];
+			await refreshAccountData();
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : '创建任务失败';
 		}

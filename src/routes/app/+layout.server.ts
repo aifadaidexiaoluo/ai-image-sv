@@ -4,8 +4,9 @@ import { ensureWallet, grantSignupCredits } from '$lib/server/credits';
 import { listAppNotifications } from '$lib/server/notifications';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ depends, locals }) => {
 	if (!locals.user) redirect(302, '/login');
+	depends('app:account');
 	await grantSignupCredits(locals.user.id);
 	const wallet = await ensureWallet(locals.user.id);
 	const account = await getAccountSummary(locals.user);

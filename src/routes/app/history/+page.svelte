@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { refreshAccountData } from '$lib/account-refresh';
 	import { dashboardFallbackImages, toolLabels, toolTypeLabels } from '$lib/app-catalog';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -191,7 +192,7 @@
 		retryingId = job.id;
 		try {
 			const response = await fetch(`/api/jobs/${job.id}/retry`, { method: 'POST' });
-			if (response.ok) await invalidateAll();
+			if (response.ok) await refreshAccountData();
 		} finally {
 			retryingId = '';
 		}

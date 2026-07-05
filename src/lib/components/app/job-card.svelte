@@ -8,6 +8,7 @@
 		LoaderCircle,
 		RotateCcw
 	} from '@lucide/svelte';
+	import { refreshAccountData } from '$lib/account-refresh';
 	import type {
 		GenerationJob,
 		GenerationJobStage,
@@ -81,11 +82,16 @@
 		}
 	}
 
+	function isTerminalStatus(status: GenerationJobStatus) {
+		return ['succeeded', 'partial', 'failed', 'canceled'].includes(status);
+	}
+
 	async function refresh() {
 		const response = await fetch(`/api/jobs/${job.id}`);
 		if (response.ok) {
 			const payload = await response.json();
 			job = payload.job;
+			if (isTerminalStatus(job.status)) await refreshAccountData();
 		}
 	}
 
@@ -95,7 +101,7 @@
 		if (response.ok) {
 			const payload = await response.json();
 			job = { ...job, ...payload.job };
-			location.reload();
+			await refreshAccountData();
 		}
 		retrying = false;
 	}
@@ -115,7 +121,10 @@
 			]) {
 				eventSource.addEventListener(type, (event) => {
 					mergeEvent(JSON.parse((event as MessageEvent).data));
-					if (type === 'job.completed' || type === 'job.failed') eventSource?.close();
+					if (type === 'job.completed' || type === 'job.failed') {
+						eventSource?.close();
+						void refreshAccountData();
+					}
 				});
 			}
 			eventSource.onerror = () => {
