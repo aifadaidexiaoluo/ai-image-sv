@@ -520,7 +520,7 @@ export const orders = pgTable(
 		status: orderStatus('status').notNull().default('pending'),
 		amount: integer('amount').notNull(),
 		currency: text('currency').notNull(),
-		provider: text('provider').notNull().default('sandbox'),
+		provider: text('provider').notNull().default('alipay'),
 		providerOrderId: text('provider_order_id'),
 		idempotencyKey: text('idempotency_key').notNull(),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

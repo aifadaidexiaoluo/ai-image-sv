@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { prices, products, orders } from '$lib/server/db/schema';
-import { paymentProvider } from '$lib/server/billing/sandbox';
+import { getAlipayCheckoutUrl } from '$lib/server/billing/alipay';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!locals.user) return json({ message: '请先登录' }, { status: 401 });
@@ -22,6 +22,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const existing = await db.query.orders.findFirst({
 		where: eq(orders.idempotencyKey, idempotencyKey)
 	});
+	if (existing && existing.userId !== locals.user.id) {
+		return json({ message: '订单幂等键已被使用' }, { status: 409 });
+	}
 	const order =
 		existing ??
 		(
@@ -32,9 +35,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 					priceId,
 					amount: item.price.amount,
 					currency: item.price.currency,
+					provider: 'alipay',
 					idempotencyKey
 				})
 				.returning()
 		)[0];
-	return json({ order, ...(await paymentProvider.createCheckout(order.id)) });
+	if (order.status === 'paid') return json({ order, url: '/app/billing?paid=1' });
+	if (order.status === 'canceled') return json({ order, url: '/app/billing?canceled=1' });
+	return json({ order, url: getAlipayCheckoutUrl(order.id) });
 };
