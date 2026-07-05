@@ -9,7 +9,6 @@
 		FileClock,
 		Gauge,
 		Image,
-		LayoutTemplate,
 		Users,
 		WandSparkles
 	} from '@lucide/svelte';
@@ -22,7 +21,6 @@
 		{ href: '/admin/users', label: '用户', icon: Users },
 		{ href: '/admin/jobs', label: '任务', icon: WandSparkles },
 		{ href: '/admin/assets', label: '素材', icon: Image },
-		{ href: '/admin/templates', label: '模板', icon: LayoutTemplate },
 		{ href: '/admin/billing', label: '账单', icon: CreditCard },
 		{ href: '/admin/organizations', label: '组织', icon: Building2 },
 		{ href: '/admin/audit', label: '审计', icon: FileClock },
