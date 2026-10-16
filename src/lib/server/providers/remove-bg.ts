@@ -7,8 +7,9 @@ export class RemoveBgProvider implements BackgroundRemovalProvider {
 
 	async removeBackground(source: { bytes: Uint8Array; mimeType: string }) {
 		if (!env.REMOVE_BG_API_KEY) throw new Error('REMOVE_BG_NOT_CONFIGURED');
+		if (!env.REMOVE_BG_ENDPOINT) throw new Error('REMOVE_BG_NOT_CONFIGURED');
 		const imageBase64 = Buffer.from(source.bytes).toString('base64');
-		const response = await fetch('https://api.zhuimengapi.com/api/v1/kotu', {
+		const response = await fetch(env.REMOVE_BG_ENDPOINT, {
 			method: 'POST',
 			headers: {
 				'X-API-Key': env.REMOVE_BG_API_KEY,

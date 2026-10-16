@@ -1,58 +1,167 @@
 # DesignAI
 
-DesignAI 是一个基于 SvelteKit 2、Svelte 5、Better Auth、Drizzle、PostgreSQL 和 MinIO 的 AI 电商图片 SaaS。项目包含商品图生成、场景编辑、智能抠图、实时任务进度、素材历史、积分套餐、沙箱支付和运营后台。
+A SvelteKit 2 application for AI-powered image generation, editing, background removal, and storage — with credits, payments, and multi-language support out of the box.
 
-## 本地启动
+## Tech Stack
 
-1. 安装依赖并准备环境变量：
+- **Framework**: SvelteKit 2 + Svelte 5 (runes) + TypeScript strict mode
+- **Styling**: Tailwind CSS + shadcn-svelte
+- **Auth**: Better Auth (email/password + sessions)
+- **Database**: PostgreSQL via Drizzle ORM
+- **Storage**: MinIO (S3-compatible)
+- **Queue**: BullMQ + Redis
+- **Payments**: Alipay (sandbox)
+- **i18n**: Paraglide
 
-   ```sh
-   bun install
-   cp .env.example .env
-   ```
+## Features
 
-2. 启动 PostgreSQL、Redis 和 MinIO。若本机端口未被占用，可直接运行：
+- Text-to-image and image-editing via OpenAI (`gpt-image-1`) or Tongyi Wanxiang (通义万相)
+- Background removal via a configurable API endpoint
+- Per-user credit system; Alipay payment flow (sandbox)
+- Admin panel, usage history, image templates
+- Email verification, password reset
+- `MOCK_AI=true` mode for fully local development without real API keys
 
-   ```sh
-   docker compose up -d postgres redis minio minio-init
-   ```
+## Quick Start
 
-3. 创建数据库表：
+### Prerequisites
 
-   ```sh
-   bun run db:migrate
-   ```
+- [Bun](https://bun.sh)
+- PostgreSQL
+- Redis
+- MinIO (or any S3-compatible storage)
 
-4. 启动 Web 服务：
+### Setup
 
-   ```sh
-   bun run dev
-   ```
+```bash
+git clone <this repo>
+cd ai-image-sv
 
-`.env.example` 默认启用 `MOCK_AI=true`，不需要外部模型密钥也能走通完整生成流程。开发环境未配置邮件网关时，验证邮箱和重置密码链接会输出到服务端控制台。
+bun install
 
-MinIO 控制台默认位于 `http://localhost:9001`，账号与密码均为 `minioadmin`。生产环境必须替换凭据，并将 `MINIO_ENDPOINT` 设置为服务端和浏览器均可访问的 HTTPS 地址。
+cp .env.example .env
+# Edit .env — see Environment Variables below
 
-## 图片服务
+bun run db:push   # apply schema to your database
 
-- `OPENAI_API_KEY`：启用 OpenAI 图片生成与编辑。
-- `DASHSCOPE_API_KEY`：启用阿里云百炼/通义万相。
-- `REMOVE_BG_API_KEY`：启用托管抠图服务。
-- `MOCK_AI=true`：始终使用本地模拟图片，适合开发和端到端验收。
-
-任务由内置 BullMQ 队列通过 Redis 调度，SvelteKit 服务端启动时会初始化图片处理消费者。处理器先持久化进度事件，再由 SSE 接口推送给页面；连接中断时前端会重连并按事件 ID 续传。
-
-## 认证与管理员
-
-Better Auth 要求 `BETTER_AUTH_SECRET` 至少 32 个高熵字符。邮箱注册必须完成验证，密码长度为 12–256 个字符。将管理员邮箱写入逗号分隔的 `ADMIN_EMAILS`，该邮箱注册时会获得后台权限。
-
-## 质量检查
-
-```sh
-bun run check
-bun run lint
-bun test
-bun run build
+bun run dev
 ```
 
-生产部署需要运行 Node adapter 生成的 Web 服务、PostgreSQL、Redis 和对象存储，并在发布阶段先执行 `bun run db:migrate`。
+Open `http://localhost:5173`.
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in your values. Every secret must stay **out of version control** — `.env` is already in `.gitignore`.
+
+### Required
+
+| Variable             | Description                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `DATABASE_URL`       | PostgreSQL connection string, e.g. `postgres://user:pass@localhost:5432/ai_image_db` |
+| `BETTER_AUTH_SECRET` | ≥ 32 random characters — generate with `openssl rand -base64 32`                     |
+| `ORIGIN`             | Public URL of your deployment, e.g. `https://yourdomain.com`                         |
+
+### Storage (MinIO / S3)
+
+| Variable           | Description                                    |
+| ------------------ | ---------------------------------------------- |
+| `MINIO_ENDPOINT`   | MinIO server URL, e.g. `http://127.0.0.1:9000` |
+| `MINIO_BUCKET`     | Bucket name                                    |
+| `MINIO_ACCESS_KEY` | Access key                                     |
+| `MINIO_SECRET_KEY` | Secret key                                     |
+| `MINIO_REGION`     | Region (default `us-east-1`)                   |
+| `MINIO_USE_SSL`    | `true` / `false`                               |
+
+### Queue
+
+| Variable                | Description                                            |
+| ----------------------- | ------------------------------------------------------ |
+| `REDIS_URL`             | Redis connection string, e.g. `redis://127.0.0.1:6379` |
+| `JOB_QUEUE_CONCURRENCY` | Worker concurrency (default `1`)                       |
+
+### Image Providers
+
+Set `MOCK_AI=true` to skip all external APIs and return placeholder images locally.
+
+| Variable                   | Description                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| `MOCK_AI`                  | `true` enables mock mode                                                            |
+| `OPENAI_API_KEY`           | OpenAI API key                                                                      |
+| `OPENAI_BASE_URL`          | API base URL (default `https://api.openai.com/v1`; override for compatible proxies) |
+| `OPENAI_IMAGE_MODEL`       | Model name (default `gpt-image-1`)                                                  |
+| `DASHSCOPE_API_KEY`        | Tongyi / DashScope API key                                                          |
+| `DASHSCOPE_IMAGE_MODEL`    | Model name (default `wanx-v1`)                                                      |
+| `DASHSCOPE_IMAGE_ENDPOINT` | DashScope endpoint URL                                                              |
+| `REMOVE_BG_API_KEY`        | Background-removal service API key                                                  |
+| `REMOVE_BG_ENDPOINT`       | Background-removal service endpoint URL                                             |
+
+### Email
+
+When `EMAIL_HTTP_ENDPOINT` is unset, verification and reset links are logged to the console (development).
+
+| Variable              | Description                                           |
+| --------------------- | ----------------------------------------------------- |
+| `EMAIL_HTTP_ENDPOINT` | HTTP gateway URL for outgoing email                   |
+| `EMAIL_HTTP_TOKEN`    | Bearer token for the email gateway                    |
+| `EMAIL_FROM`          | Sender address, e.g. `DesignAI <noreply@example.com>` |
+
+### Admin & Payments
+
+| Variable             | Description                                                |
+| -------------------- | ---------------------------------------------------------- |
+| `ADMIN_EMAILS`       | Comma-separated emails granted admin on first registration |
+| `ALIPAY_APP_ID`      | Alipay application ID                                      |
+| `ALIPAY_PRIVATE_KEY` | RSA private key (PKCS8)                                    |
+| `ALIPAY_PUBLIC_KEY`  | Alipay public key                                          |
+| `ALIPAY_KEY_TYPE`    | `PKCS8` or `PKCS1`                                         |
+| `ALIPAY_NOTIFY_URL`  | Async callback URL                                         |
+| `ALIPAY_RETURN_URL`  | Sync return URL after payment                              |
+| `ALIPAY_GATEWAY`     | Alipay gateway URL (sandbox or production)                 |
+
+## Development Commands
+
+```bash
+bun run dev          # start dev server (http://localhost:5173)
+bun run build        # production build
+bun run preview      # serve production build locally
+bun run check        # Svelte + TypeScript type check
+bun run lint         # Prettier + ESLint check
+bun run format       # auto-format
+
+bun run db:generate  # generate Drizzle migration files
+bun run db:migrate   # run pending migrations
+bun run db:push      # push schema directly (dev)
+bun run db:studio    # open Drizzle Studio
+```
+
+## Project Structure
+
+```
+src/
+├── routes/          # SvelteKit pages and API routes
+│   ├── (auth)/      # login, register, forgot-password, reset-password
+│   ├── app/         # authenticated app shell (generate, history, settings)
+│   ├── admin/       # admin panel
+│   ├── api/         # server-only API endpoints and webhooks
+│   ├── pricing/     # pricing page
+│   └── checkout/    # payment flow
+└── lib/
+    ├── server/      # server-only code (auth, db, storage, jobs, providers)
+    │   ├── db/      # Drizzle schema and migrations
+    │   ├── providers/  # OpenAI, Tongyi, remove-bg adapters
+    │   ├── jobs/    # BullMQ workers
+    │   └── email/   # email gateway client
+    ├── components/  # Svelte UI components
+    └── paraglide/   # generated i18n messages (do not edit)
+```
+
+## Contributing
+
+1. Fork the repo and create a feature branch.
+2. Follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `chore:`, `style:`.
+3. Run `bun run check && bun run lint && bun run build` before opening a PR.
+4. Never commit `.env` or any file containing real credentials.
+
+## License
+
+MIT
